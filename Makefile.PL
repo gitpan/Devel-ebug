@@ -23,7 +23,8 @@ WriteMakefile
                          },
           'INSTALLDIRS' => 'site',
           'EXE_FILES' => [
-                           'ebug'
+                           'ebug',
+                           'ebug_http'
                          ],
           'PL_FILES' => {}
         )

@@ -1,6 +1,9 @@
 Revision history for Perl module Devel::ebug
 
-0.31
+0.32 Fri Apr  1 14:09:00 CST 2005
+     - added "ebug_http" to script_files so that it will get installed
+
+0.31 Fri Apr  1 13:36:00 CST 2005
      - added return(), which returns from a subroutine
      - fix bug with 'l' showing inaccurate lines in ebug
      - added filenames() method which returns a list of the filenames

@@ -22,6 +22,6 @@ my $build = Module::Build->new(
     'Test::More'           => '0',
     'YAML'                 => '0',
   },
-  script_files       => 'ebug',
+  script_files       => ['ebug', 'ebug_http'],
 );
 $build->create_build_script;
