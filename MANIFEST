@@ -1,0 +1,21 @@
+Build.PL
+CHANGES
+ebug
+lib/Devel/ebug.pm
+Makefile.PL
+MANIFEST			This list of files
+META.yml
+README
+t/basic.t
+t/break_point.t
+t/calc.pl
+t/Calc.pm
+t/calc_oo.pl
+t/codelines.t
+t/eval.t
+t/oo.t
+t/pad.t
+t/pod.t
+t/subroutine.t
+t/watch_point.t
+TODO

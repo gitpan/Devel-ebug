@@ -1,0 +1,88 @@
+#!perl
+use strict;
+use warnings;
+use lib 'lib';
+use Devel::ebug;
+use Term::ReadLine;
+
+my $ebug = Devel::ebug->new;
+$ebug->program(shift);
+$ebug->load;
+
+print "* Welcome to Devel::ebug $Devel::ebug::VERSION\n";
+
+my $term = Term::ReadLine->new('ebug');
+my $last_command = "s";
+
+while (1) {
+  print $ebug->subroutine
+    . "(" . $ebug->filename . "#" . $ebug->line . "): "
+    . $ebug->codeline, "\n";
+  my $command = $term->readline("ebug: ");
+  $command = "q" if not defined $command;
+  $command = $last_command if ($command eq "");
+
+  if ($command eq 'h') {
+    print "Commands:
+
+    b Set breakpoint at a line number (eg: b 6, b code.t 6, b code.t 6 $x > 7,
+      b Calc::fib)
+    e Eval Perl code and print the result (eg: e $x+$y)
+    l Show codelines
+    n Next (steps over subroutine calls)
+    p Show pad
+    r Run until next breakpoint
+    s Step (steps into subroutine calls)
+    w Set a watchpoint (eg: w $t > 10)
+    q Quit
+";
+  } elsif ($command eq 'l') {
+    my @span = ($ebug->line-4 .. $ebug->line+4);
+    @span = grep { $_ >= 0 } @span;
+    my $codelines = $ebug->codelines(@span);
+    my @break_points = $ebug->break_points();
+    my %break_points;
+    $break_points{$_}++ foreach @break_points;
+    foreach my $s (@span) {
+      my $codeline = $codelines->{$s};
+      next unless defined $codeline;
+      if ($s == $ebug->line) {
+	print "*";
+      } elsif ($break_points{$s}) {
+	print "b";
+      } else {
+	print " ";
+      }
+      print "$s:$codeline\n";
+    }
+  } elsif ($command eq 'p') {
+    my $pad = $ebug->pad;
+    foreach my $k (sort keys %$pad) {
+      my $v = $pad->{$k};
+      print "  $k = $v;\n";
+    }
+  } elsif ($command eq 's') {
+    $ebug->step;
+  } elsif ($command =~ /^e (.+)/) {
+    print $ebug->eval($1) . "\n";
+  } elsif ($command eq 'n') {
+    $ebug->next;
+  } elsif ($command eq 'r') {
+    $ebug->run;
+  } elsif (my($line, $condition) = $command =~ /^b (\d+) ?(.*)/) {
+    undef $condition unless $condition;
+    $ebug->break_point($line, $condition);
+  } elsif ($command =~ /^b (.+?) (\d+) ?(.*)/) {
+    $ebug->break_point($1, $2, $3);
+  } elsif ($command =~ /^b (.+)/) {
+    $ebug->break_point_subroutine($1);
+  } elsif ($command =~ /^w (.+)/) {
+    my($watch_point) = $command =~ /^w (.+)/;
+    $ebug->watch_point($watch_point);
+  } elsif ($command eq 'q') {
+    exit;
+  } else {
+    print "Unknown ebug command '$command'!\n";
+  }
+  $last_command = $command;
+}

@@ -1,0 +1,191 @@
+NAME
+    Devel::ebug - A simple, extensible Perl debugger
+
+SYNOPSIS
+      use Devel::ebug;
+      my $ebug = Devel::ebug->new;
+      $ebug->program("calc.pl");
+      $ebug->load;
+
+      print "At line: "       . $ebug->line       . "\n";
+      print "In subroutine: " . $ebug->subroutine . "\n";
+      print "In package: "    . $ebug->package    . "\n";
+      print "In filename: "   . $ebug->filename   . "\n";
+      print "Code: "          . $ebug->codeline   . "\n";
+      $ebug->step;
+      $ebug->step;
+      $ebug->next;
+      $ebug->break_point(6);
+      $ebug->break_point(6, '$e = 4');
+      $ebug->break_point("t/Calc.pm", 29);
+      $ebug->break_point("t/Calc.pm", 29, '$i == 2');
+      $ebug->break_point_subroutine("main::add");
+      my @break_points = $ebug->break_points();
+      $ebug->watch_point('$x > 100');
+      my $codelines = $ebug->codelines(@span);
+      $ebug->run;
+      my $pad  = $ebug->pad;
+      foreach my $k (sort keys %$pad) {
+        my $v = $pad->{$k};
+        print "Variable: $k = $v\n";
+      }
+      my $v = $ebug->eval('2 ** $exp');
+
+DESCRIPTION
+    A debugger is a computer program that is used to debug other programs.
+    Devel::ebug is a simple, extensible Perl debugger with a clean API.
+    Using this module, you may easily write a Perl debugger to debug your
+    programs. Alternatively, it comes with an interactive debugger, ebug.
+
+    The reasoning behind building Devel::ebug is that the current Perl
+    debugger, perl5db.pl, is very crufty, hard to use and extend and has no
+    tests. Devel::ebug provides a simple programmatic interface to debugging
+    programs, which is well tested. This makes it easier to build debuggers
+    on top of Devel::ebug, be they console-, curses-, GUI- or Ajax-based.
+
+    Devel::ebug is a work in progress.
+
+    Internally, Devel::ebug consists of two parts. The frontend is
+    Devel::ebug, which you interact with. The frontend starts the code you
+    are debugging in the background under the backend (running it under perl
+    -d:ebug code.pl). The backend starts a TCP server, which the frontend
+    then connects to, and uses this to drive the backend. This adds some
+    flexibilty in the debugger.
+
+CONSTRUCTOR
+  new
+    The constructor creats a Devel::ebug object:
+
+      my $ebug = Devel::ebug->new;
+
+  program
+    The program method selects which program to load:
+
+      $ebug->program("calc.pl");
+
+  load
+    The load method loads the program and gets ready to debug it:
+
+      $ebug->load;
+
+METHODS
+  break_point
+    The break_point method sets a break point in a program. If you are
+    run-ing through a program, the execution will stop at a break point.
+    Break points can be set in a few ways.
+
+    A break point can be set at a line number in the current file:
+
+      $ebug->break_point(6);
+
+    A break point can be set at a line number in the current file with a
+    condition that must be true for execution to stop at the break point:
+
+      $ebug->break_point(6, '$e = 4');
+
+    A break point can be set at a line number in a file:
+
+      $ebug->break_point("t/Calc.pm", 29);
+
+    A break point can be set at a line number in a file with a condition
+    that must be true for execution to stop at the break point:
+
+      $ebug->break_point("t/Calc.pm", 29, '$i == 2');
+
+  break_point_subroutine
+    The break_point_subroutine method sets a break point in a program right
+    at the beginning of the subroutine. The subroutine is specified with the
+    full package name:
+
+      $ebug->break_point_subroutine("main::add");
+      $ebug->break_point_subroutine("Calc::fib");
+
+  break_points
+    The break_points method returns a list of all the line numbers in the
+    current file that have a break point set.
+
+      my @break_points = $ebug->break_points();
+
+  codeline
+    The codeline method returns the line of code that is just about to be
+    executed:
+
+      print "Code: "          . $ebug->codeline   . "\n";
+
+  codelines
+    The codelines method returns a span of lines from the current file:
+
+      my $codelines = $ebug->codelines(10 .. 20);
+
+  eval
+    The eval method evaluates Perl code in the current program and returns
+    the result:
+
+      my $v = $ebug->eval('2 ** $exp');
+
+  filename
+    The filename method returns the filename of the currently running code:
+
+      print "In filename: "   . $ebug->filename   . "\n";
+
+  line
+    The line method returns the line number of the statement about to be
+    executed:
+
+      print "At line: "       . $ebug->line       . "\n";
+
+  next
+    The next method steps onto the next line in the program. It executes any
+    subroutine calls but does not step through them.
+
+      $ebug->next;
+
+  package
+    The package method returns the package of the currently running code:
+
+      print "In package: "    . $ebug->package    . "\n";
+
+  pad
+      my $pad  = $ebug->pad;
+      foreach my $k (sort keys %$pad) {
+        my $v = $pad->{$k};
+        print "Variable: $k = $v\n";
+      }
+
+  run
+    The run subroutine starts executing the code. It will only stop on a
+    break point or watch point.
+
+      $ebug->run;
+
+  step
+    The step method steps onto the next line in the program. It steps
+    through into any subroutine calls.
+
+      $ebug->step;
+
+  subroutine
+    The subroutine method returns the subroutine of the currently working
+    code:
+
+      print "In subroutine: " . $ebug->subroutine . "\n";
+
+  watch_point
+    The watch point method sets a watch point. A watch point has a
+    condition, and the debugger will stop run-ing as soon as this condition
+    is true:
+
+      $ebug->watch_point('$x > 100');
+
+SEE ALSO
+    perldebguts
+
+AUTHOR
+    Leon Brocard, "<acme@astray.com>"
+
+COPYRIGHT
+    Copyright (C) 2005, Leon Brocard
+
+    This module is free software; you can redistribute it or modify it under
+    the same terms as Perl itself.
+
