@@ -17,22 +17,137 @@ my $tt = Template->new;
 my $lines_visible_above_count = 10;
 my $sequence = 1;
 
+=head1 NAME
+
+Devel::ebug::HTTP - webserver front end to Devel::ebug
+
+=head1 SYNOPSIS
+
+  # it's easier to use the 'ebug_httpd' script
+  my $server = Devel::ebug::HTTP->new();
+  $server->port(8080);
+  $server->program($filename);
+  $server->run();
+
+=head1 DESCRIPTION
+
+=head2 Accessors
+
+In addition to the accessors defined by the
+B<HTTP::Server::Simple::CGI>, the following get/set chanined
+accessors are defined.
+
+=over
+
+=item program
+
+The name of the program we're running.  When C<run> is called
+an instance of B<Devel::ebug> is created that executes this
+program.
+
+=item ebug
+
+The B<Devel::ebug> instance that this front end is displaying.
+
+=back
+
+=head2 Internals
+
+Essentially this module is a B<HTTP::Server::Simple::CGI> subclass.
+The main method is the C<handle_request> method which is called for
+each request to the websever.
+
+=over
+
+=item handle_request
+
+Method that's called each individual request that's made to the server
+from the web browser.  This dispatches to all the other methods.
+
+=cut
+
 sub handle_request {
   my ($self, $cgi) = @_;
 
-  if ($cgi->self_url =~ /favicon.ico/) {
-    return;
-  }
+  # ignore requests that we don't want to handle
+  if ($self->skip_request($cgi))
+    { return }
 
-  unless (defined $self->ebug) {
-    my $ebug = Devel::ebug->new();
-    $ebug->program($self->program);
-    $ebug->load;
-    $self->ebug($ebug);
-  }
+  # start the ebug process if we need to
+  unless ($self->ebug)
+    { $self->create_ebug }
 
-  my $ebug = $self->ebug;
+  # pass commands we've been passed to the ebug
   my $action = lc($cgi->param('myaction') || '');
+  $self->tell_ebug($action);
+
+  # check we're doing things in the right order
+  my $cgi_sequence = $cgi->param('sequence');
+  if (defined $cgi_sequence && $cgi_sequence < $sequence) {
+    $self->ebug->undo($sequence - $cgi_sequence);
+    $sequence = $cgi_sequence;
+  }
+  $sequence++;
+
+  # start again if the process has completed
+  if ($self->ebug->finished) {
+    $self->ebug->load;
+  }
+
+  print $self->create_output;
+}
+
+=item skip_request
+
+Returns true if we should skip the current request and return
+a 404.  Currently used for not creating favicons.
+
+=cut
+
+sub skip_request {
+  my ($self, $cgi) = @_;
+  my $url = $cgi->self_url;
+
+  # no, we don't have a favourite icon
+  return 1 if $url =~ /favicon.ico/;
+
+  # don't skip it
+  return;
+}
+
+=back
+
+=head2 Interacting with ebug
+
+=over
+
+=item create_ebug
+
+Create a new ebug instance and store it via the C<ebug> accessor.
+
+=cut
+
+sub create_ebug {
+  my ($self) = @_;
+
+  my $ebug = Devel::ebug->new();
+  $ebug->program($self->program);
+  $ebug->load;
+  $self->ebug($ebug);
+
+  return $ebug;
+}
+
+=item tell_ebug($what);
+
+Tell the ebug process what's going on.
+
+=cut
+
+sub tell_ebug {
+  my ($self,$action) = @_;
+  my $ebug = $self->ebug;
+
   if ($action eq 'step') {
     $ebug->step;
   } elsif ($action eq 'next') {
@@ -42,23 +157,45 @@ sub handle_request {
   } elsif ($action eq 'undo') {
     $ebug->undo;
   }
+}
 
-  my $cgi_sequence = $cgi->param('sequence');
-  if (defined $cgi_sequence && $cgi_sequence < $sequence) {
-    $ebug->undo($sequence - $cgi_sequence);
-    $sequence = $cgi_sequence;
-  }
-  $sequence++;
+=back
 
-  my $finished = $ebug->finished;
-  if ($finished) {
-    $ebug->load;
-  }
+=head2 Creating the HTML/HTTP response
+
+=over
+
+=item create_output
+
+Create everything that's sent to the client.  Calls the other methods
+documented below.
+
+=cut
+
+sub create_output {
+  my $self = shift;
+
+  # process the template
+  my $html = $self->create_html;
+
+  return $self->header($html)
+         . "\r\n"
+         . $html;
+}
+
+=item create_html
+
+Create the html.
+
+=cut
+
+sub create_html {
+  my $self = shift;
+  my $ebug = $self->ebug;
 
   my $vars = {
     codelines => $self->codelines,
     ebug => $ebug,
-    finished => $finished,
     self => $self,
     sequence => $sequence,
     stack_trace_human => [$ebug->stack_trace_human],
@@ -69,10 +206,14 @@ sub handle_request {
   my $template = $self->template();
   $tt->process(\$template, $vars, \$html) || die $tt->error();
 
-  print "HTTP/1.0 200 OK\r\n";
-  print "Content-Type: text/html\r\nContent-Cache: No\r\nContent-Length: ",
-  length($html), "\r\n\r\n", $html;
+  return $html;
 }
+
+=item codelines
+
+Create the marked up perl code.
+
+=cut
 
 sub codelines {
   my($self) = @_;
@@ -88,7 +229,7 @@ sub codelines {
   my $split = '<span class="line_number">';
 
   # turn significant whitespace into &nbsp;
-  my @lines = map { 
+  my @lines = map {
     $_ =~ s{</span>( +)}{"</span>" . ("&nbsp;" x length($1))}e;
     "$split$_";
   } split /$split/, $pretty;
@@ -112,6 +253,28 @@ sub codelines {
   return \@lines;
 }
 
+=item header($html)
+
+Return a string that contains the http header for the html that's
+been passed (including the server status code.)
+
+=cut
+
+sub header {
+  my ($self,$html) = @_;
+
+  return "HTTP/1.0 200 OK\r\n"
+    . "Content-Type: text/html\r\n"
+    . "Content-Cache: No\r\n"
+    . "Content-Length: " . length($html) . "\r\n";
+}
+
+=item template
+
+Return the template toolkit template.
+
+=cut
+
 sub template {
   return q~
 <?xml version="1.0" encoding="UTF-8"?>
@@ -120,33 +283,33 @@ sub template {
 <head>
 <style type="text/css">
 body {
-	margin: 0px;
-	background-color: white;
-	font-family: sans-serif;
-	color: black;
+        margin: 0px;
+        background-color: white;
+        font-family: sans-serif;
+        color: black;
 }
 #body {
-	margin: 10px 240px 0px 10px;
-	padding: 0px;
+        margin: 10px 240px 0px 10px;
+        padding: 0px;
 }
 #pad {
-	position: absolute;
-	top: 30px;
-	right: 0px;
-	width: 200px;
+        position: absolute;
+        top: 30px;
+        right: 0px;
+        width: 200px;
 
-	padding-right: 10px;
-	padding-bottom: 0px;
-	background-color: #ffffff;
+        padding-right: 10px;
+        padding-bottom: 0px;
+        background-color: #ffffff;
 }
 #version {
-	text-align: center;
-	font-size: small;
-	clear: both;
+        text-align: center;
+        font-size: small;
+        clear: both;
 
-	margin-top: 10px;
-	padding: 5px 0px 5px 0px;
-	color: #aaaaaa;
+        margin-top: 10px;
+        padding: 5px 0px 5px 0px;
+        color: #aaaaaa;
 }
 #code {
   font-family: monospace;
@@ -180,7 +343,7 @@ function register(e) {
     if (e == null) {
         // IE
         key = event.keyCode
-    } 
+    }
     else {
         // Mozilla
         if (e.altKey || e.ctrlKey) {
@@ -202,13 +365,12 @@ function register(e) {
 }
 // -->
 </script>
-<title>[% ebug.program %] [% ebug.subroutine %]([% ebug.filename %]#[% ebug.line %]) [% ebug.codeline %]</title>
+<title>[% ebug.program | html %] [% ebug.subroutine %]([% ebug.filename | html %]#[% ebug.line %]) [% ebug.codeline | html %]</title>
 </head>
 <body>
 <div id="body">
 <p>
-[% self.program %] [% ebug.subroutine %]([% ebug.filename %]#[% ebug.line %])
-[% IF finished %]<b>Program finished, restarted!</b>[% END %]
+[% self.program | html %] [% ebug.subroutine %]([% ebug.filename | html %]#[% ebug.line %])
 <br/>
 <form name="myform" method="post">
  <input type="hidden" name="sequence" value="[% sequence %]">
@@ -229,10 +391,10 @@ function register(e) {
 </div>
 
 <div id="pad">
-<h3>Variables in [% ebug.subroutine %]</h3>
+<h3>Variables in [% ebug.subroutine | html %]</h3>
 [% pad = ebug.pad %]
 [% FOREACH k IN pad.keys.sort %]
-  <span class="symbol">[% k %]</span> = <span class="number">[% pad.$k %]</span><br/>
+  <span class="symbol">[% k | html %]</span> = <span class="number">[% pad.$k | html %]</span><br/>
 [% END %]
 
 <h3>Stack trace</h3>

@@ -3,9 +3,13 @@ use strict;
 use warnings;
 use lib 'lib';
 use Devel::ebug;
-use Expect::Simple;
-use Test::Expect;
-use Test::More tests => 15;
+use Test::More;
+
+eval "use Test::Expect";
+plan skip_all => "Test::Expect required for testing POD: $@" if $@;
+eval "use Expect::Simple";
+plan skip_all => "Expect::Simple required for testing POD: $@" if $@;
+plan tests => 15;
 
 expect_run(
   command => "PERL_RL=\"o=0\" $^X ebug t/calc.pl",
@@ -24,7 +28,7 @@ expect("h", 'Commands:
     d Delete a break point (d 6, d code.pl 6)
     e Eval Perl code and print the result (eg: e $x+$y)
     f Show all the filenames loaded
-    l List codelines
+    l List codelines or set number of codelines to list (eg: l, l 20)
     L List codelines always (toggle)
     n Next (steps over subroutine calls)
     p Show pad

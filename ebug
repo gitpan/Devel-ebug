@@ -47,7 +47,7 @@ while (1) {
     d Delete a break point (d 6, d code.pl 6)
     e Eval Perl code and print the result (eg: e $x+$y)
     f Show all the filenames loaded
-    l List codelines
+    l List codelines or set number of codelines to list (eg: l, l 20)
     L List codelines always (toggle)
     n Next (steps over subroutine calls)
     p Show pad
@@ -61,6 +61,9 @@ while (1) {
     q Quit
 ';
   } elsif ($command eq 'l') {
+    show_codelines($codelines, $ebug, $list_lines_count);
+  } elsif ($command =~ /^ l \s+ (\d+) $/x) {
+    $list_lines_count = $1 if $1 > 0;
     show_codelines($codelines, $ebug, $list_lines_count);
   } elsif ($command eq 'L') {
     $list_always = !$list_always;
@@ -148,7 +151,7 @@ __END__
 
 =head1 NAME
 
-Devel::ebug - A simple, extensible Perl debugger
+ebug - A simple, extensible console Perl debugger
 
 =head1 SYNOPSIS
 

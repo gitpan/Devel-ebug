@@ -1,5 +1,20 @@
 Revision history for Perl module Devel::ebug
 
+0.36 Sun Apr  3 20:56:56 CST 2005
+     - total rearrange of Devel::ebug::HTTP and increase in
+       documentation (thanks to Mark Fowler)
+     - create valid XML no matter what the variables or code contains
+       (thanks to Mark Fowler)
+     - correct the =head1 NAME of ebug and ebug_http (spotted by Smylers)
+     - stack_trace_human is now more robust
+     - Test::Expect doesn't work under Windows, so don't require or
+       use it in Windows environments - this means we now require
+       Module::Build (spotted by Johan Lindstrom)
+     - make codelines() remove DOS as well as UNIX newlines (spotted
+       by Johan Lindstrom)
+     - in ebug, l 40 will to set the number of lines to list (patch by
+       Johan Lindstrom)
+
 0.35 Sat Apr  2 23:34:56 CST 2005
      - added undo method which undos the last action
      - in ebug_http, using the back button in the browser actually

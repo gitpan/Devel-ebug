@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use lib 'lib';
-use Test::More tests => 17;
+use Test::More tests => 19;
 use Devel::ebug;
 
 my $ebug = Devel::ebug->new;
@@ -46,6 +46,15 @@ $ebug->run;
 is(scalar(@trace), 2);
 is($trace[1], '$calc->fib1(15)');
 is($trace[0], '$self->fib1(14)');
+
+$ebug = Devel::ebug->new;
+$ebug->program("t/koremutake.pl");
+$ebug->load;
+
+$ebug->step;
+@trace = $ebug->stack_trace_human;
+is(scalar(@trace), 1);
+is($trace[0], 'String::Koremutake->new()');
 
 $ebug = Devel::ebug->new;
 $ebug->program("t/koremutake.pl");

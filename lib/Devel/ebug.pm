@@ -11,7 +11,7 @@ use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
 program socket proc
 package filename line codeline finished));
-our $VERSION = "0.35";
+our $VERSION = "0.36";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -204,7 +204,9 @@ sub stack_trace_human {
     my @args = $frame->args;
     my $first = $args[0];
     my $first_class = ref($first);
-#    warn "first class: $first_class, package: $package, subroutine: $subroutine\n";
+    my($subroutine_class, $subroutine_method) = $subroutine =~ /^(.+)::([^:])+?$/;
+#    warn "first: $first, first class: $first_class, package: $package, subroutine: $subroutine ($subroutine_class :: $subroutine_method)\n";
+
     if (defined $first && blessed($first) && $subroutine =~ /^${first_class}::/ &&
 	$subroutine =~ /^$package/) {
       $subroutine =~ s/^${first_class}:://;
@@ -218,8 +220,11 @@ sub stack_trace_human {
       push @human, "$first->$subroutine" . $self->stack_trace_human_args(@args);
     } elsif ($subroutine =~ s/^${package}:://) {
       push @human, "$subroutine" . $self->stack_trace_human_args(@args);
+    } elsif ($subroutine_class eq $first) {
+      shift @args;
+      push @human, "$first->new" . $self->stack_trace_human_args(@args);
     } else {
-      die "Unknown case";
+      push @human, "$subroutine" . $self->stack_trace_human_args(@args);
     }
   }
   return @human;
@@ -578,7 +583,7 @@ sub fetch_codelines {
   # defined!
   @codelines = map  { defined($_) ? $_ : ""  } @codelines;
   # remove newlines
-  @codelines = map { $_ =~ s/\n$//; $_ } @codelines;
+  @codelines = map { $_ =~ s/\s+$//; $_ } @codelines;
   # we run it with -d:ebug, so remove this extra line
   @codelines = grep  { $_ ne 'use Devel::ebug;' } @codelines;
   if (@lines) {
