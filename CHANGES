@@ -1,5 +1,22 @@
 Revision history for Perl module Devel::ebug
 
+0.37 Tue Apr  5 22:55:18 CST 2005
+     - moved ebug code into Devel::ebug::Console
+     - moved the backend into Devel::ebug::Backend
+     - major refactoring of Devel::ebug::Backend: move everything to
+       subroutines, pass the context around
+     - major refactoring to place functionality in plugins (patch by
+       Simon Wistow)
+     - fix a problem with code references (spotted by nadim) - we now
+       use YAML instead of Storable
+     - make stack_trace_human deal with undef strings, list refs, hash
+       refs, and objects in arguments
+     - new pad_human method for a human-readable pad view
+     - in ebug_http, allow you to set simple break points and run
+     - be sure to produce valid XHTML
+     - added support for invoking the debugger by sending a signal
+       (requested by Sam Vilain)
+
 0.36 Sun Apr  3 20:56:56 CST 2005
      - total rearrange of Devel::ebug::HTTP and increase in
        documentation (thanks to Mark Fowler)

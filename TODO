@@ -6,8 +6,6 @@ Allow debugging of regexes
 Better error message for when server goes away (storable)
 Capture STDOUT,STDERR in ebug_http
 Command line arguments
-Deal with signals (break point in my code): kill 2, $$
-Documentation for Devel::ebug::HTTP
 Edit program in place while still debugging using Module::Refresh
 Emacs Devel::ebug mode
 Forks: when the program being debugged forks, follow the child in ebug_http
@@ -15,9 +13,11 @@ Forks: when the program being debugged forks, open a new window in ebug_http
 Human readbale stack trace: deal with list refs, hash refs, strings
 Jump to stack frame in ebug_http
 Localise ebug, ebug_http
+Make break_points able to return break points in other filenames
 Make break_point_subroutine take a condition
 Make plugins work
 Merge watch points and break points
+Optimise ebug (make timing graphs and see if we can add pipelining)
 PPI failures with weird characters - cope
 Pretty print variables
 Return list/listrefs and hash/hashrefs depending on context

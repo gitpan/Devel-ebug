@@ -19,11 +19,12 @@ my $sequence = 1;
 
 =head1 NAME
 
-Devel::ebug::HTTP - webserver front end to Devel::ebug
+Devel::ebug::HTTP - Webserver front end to Devel::ebug
 
 =head1 SYNOPSIS
 
   # it's easier to use the 'ebug_httpd' script
+  use Devel::ebug::HTTP;
   my $server = Devel::ebug::HTTP->new();
   $server->port(8080);
   $server->program($filename);
@@ -79,7 +80,8 @@ sub handle_request {
 
   # pass commands we've been passed to the ebug
   my $action = lc($cgi->param('myaction') || '');
-  $self->tell_ebug($action);
+  my $break_point = $cgi->param('break_point');
+  $self->tell_ebug($action, $break_point);
 
   # check we're doing things in the right order
   my $cgi_sequence = $cgi->param('sequence');
@@ -94,7 +96,7 @@ sub handle_request {
     $self->ebug->load;
   }
 
-  print $self->create_output;
+  print $self->create_output($cgi);
 }
 
 =item skip_request
@@ -145,15 +147,19 @@ Tell the ebug process what's going on.
 =cut
 
 sub tell_ebug {
-  my ($self,$action) = @_;
+  my ($self, $action, $arg) = @_;
   my $ebug = $self->ebug;
 
-  if ($action eq 'step') {
-    $ebug->step;
-  } elsif ($action eq 'next') {
+  if ($action eq 'break point:') {
+    $ebug->break_point($arg);
+  } if ($action eq 'next') {
     $ebug->next;
   } elsif ($action eq 'return') {
     $ebug->return;
+  } elsif ($action eq 'run') {
+    $ebug->run;
+  } if ($action eq 'step') {
+    $ebug->step;
   } elsif ($action eq 'undo') {
     $ebug->undo;
   }
@@ -173,10 +179,10 @@ documented below.
 =cut
 
 sub create_output {
-  my $self = shift;
+  my($self, $cgi) = @_;
 
   # process the template
-  my $html = $self->create_html;
+  my $html = $self->create_html($cgi);
 
   return $self->header($html)
          . "\r\n"
@@ -190,16 +196,23 @@ Create the html.
 =cut
 
 sub create_html {
-  my $self = shift;
+  my($self, $cgi) = @_;
   my $ebug = $self->ebug;
 
+  my $break_points;
+  $break_points->{$_}++ foreach $ebug->break_points;
+
+  my $url = $cgi->url . "/#top";
+
   my $vars = {
+    break_points => $break_points,
     codelines => $self->codelines,
     ebug => $ebug,
     self => $self,
     sequence => $sequence,
     stack_trace_human => [$ebug->stack_trace_human],
     top_visible_line => max(1, $ebug->line - $lines_visible_above_count + 1),
+    url => $url,
   };
 
   my $html;
@@ -242,6 +255,9 @@ sub codelines {
       '<span class="line_number">' . ("&nbsp;" x $size) . "$1:"}e;
     $_;
   } @lines;
+
+  # make us slightly more XHTML
+  $_ =~ s{<br>}{<br/>} foreach @lines;
 
   # link module names to search.cpan.org
   @lines = map {
@@ -313,8 +329,6 @@ body {
 }
 #code {
   font-family: monospace;
-/* margin-left: 30px; */
-/* margin-right: 30px; */
   background: #eeeedd;
   border-width: 1px;
   border-style: solid solid solid solid;
@@ -355,6 +369,7 @@ function register(e) {
     switch (letter) {
         case "n": myaction = "next"; break
         case "r": myaction = "return"; break
+        case "R": myaction = "run"; break
         case "s": myaction = "step"; break
         case "u": myaction = "undo"; break
     }
@@ -365,34 +380,39 @@ function register(e) {
 }
 // -->
 </script>
-<title>[% ebug.program | html %] [% ebug.subroutine %]([% ebug.filename | html %]#[% ebug.line %]) [% ebug.codeline | html %]</title>
+[% subroutine = ebug.subroutine | html %]
+<title>[% ebug.program | html %] [% subroutine %]([% ebug.filename | html %]#[% ebug.line %]) [% ebug.codeline | html %]</title>
 </head>
 <body>
 <div id="body">
 <p>
-[% self.program | html %] [% ebug.subroutine %]([% ebug.filename | html %]#[% ebug.line %])
-<br/>
-<form name="myform" method="post">
- <input type="hidden" name="sequence" value="[% sequence %]">
- <input type="submit" name="myaction" value="Step">
- <input type="submit" name="myaction" value="Next">
- <input type="submit" name="myaction" value="Return">
- <input type="submit" name="myaction" value="Undo">
-</form>
+[% self.program | html %] [% subroutine %]([% ebug.filename | html %]#[% ebug.line %])
 </p>
+<form name="myform" method="post" action="[% url %]">
+ <input type="hidden" name="sequence" value="[% sequence %]"/>
+ <input type="submit" name="myaction" value="Step"/>
+ <input type="submit" name="myaction" value="Next"/>
+ <input type="submit" name="myaction" value="Return"/>
+ <input type="submit" name="myaction" value="Run"/>
+ <input type="submit" name="myaction" value="Undo"/>
+ <input type="submit" name="myaction" value="Break point:"/>
+ <input type="text" name="break_point" value=""/>
+</form>
 
 <div id="code">
 [% FOREACH i IN [1..codelines.size] %]
 [% IF i == top_visible_line %]<a name="top"></a>[% END %]
-[% IF i == ebug.line %]<div id="current_line">[% END %]
-  [% codelines.$i %]
+[% IF i == ebug.line %]<div id="current_line">[% END -%]
+[% IF break_points.$i %]B[% ELSE %]&nbsp;[% END -%]
+[% codelines.$i %]
 [% IF i == ebug.line %]</div>[% END %]
 [% END %]
 </div>
+</div>
 
 <div id="pad">
-<h3>Variables in [% ebug.subroutine | html %]</h3>
-[% pad = ebug.pad %]
+<h3>Variables in [% subroutine %]</h3>
+[% pad = ebug.pad_human %]
 [% FOREACH k IN pad.keys.sort %]
   <span class="symbol">[% k | html %]</span> = <span class="number">[% pad.$k | html %]</span><br/>
 [% END %]
@@ -409,10 +429,10 @@ function register(e) {
 <a href="http://search.cpan.org/dist/Devel-ebug/">Devel::ebug</a> [% ebug.VERSION %]
 </div>
 
-<form name="hiddenform" method="post" style="visibility:hidden;">
- <input type="hidden" name="myaction" value="nothing">
- <input type="hidden" name="sequence" value="[% sequence %]">
- <input type="submit" name="foo" value="Return">
+<form name="hiddenform" method="post" style="visibility:hidden;" action="[% url %]">
+ <input type="hidden" name="myaction" value="nothing"/>
+ <input type="hidden" name="sequence" value="[% sequence %]"/>
+ <input type="submit" name="foo" value="Return"/>
 </form>
 </body>
 </html>

@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use lib 'lib';
-use Test::More tests => 19;
+use Test::More tests => 29;
 use Devel::ebug;
 
 my $ebug = Devel::ebug->new;
@@ -65,6 +65,48 @@ $ebug->run;
 @trace = $ebug->stack_trace_human;
 is(scalar(@trace), 1);
 is($trace[0], '$koremutake->integer_to_koremutake(65535)');
+
+$ebug = Devel::ebug->new;
+$ebug->program("t/stack.pl");
+$ebug->load;
+$ebug->break_point_subroutine("main::show");
+
+$ebug->run;
+@trace = $ebug->stack_trace_human;
+is(scalar(@trace), 1);
+is($trace[0], 'show()');
+
+$ebug->run;
+@trace = $ebug->stack_trace_human;
+is($trace[0], 'show(1, undef, 2)');
+
+$ebug->run;
+@trace = $ebug->stack_trace_human;
+is($trace[0], 'show(123)');
+
+$ebug->run;
+@trace = $ebug->stack_trace_human;
+is($trace[0], 'show(-0.3)');
+
+$ebug->run;
+@trace = $ebug->stack_trace_human;
+is($trace[0], "show('a')");
+
+$ebug->run;
+@trace = $ebug->stack_trace_human;
+is($trace[0], 'show("orange o rama")');
+
+$ebug->run;
+@trace = $ebug->stack_trace_human;
+is($trace[0], 'show([...])');
+
+$ebug->run;
+@trace = $ebug->stack_trace_human;
+is($trace[0], 'show({...})');
+
+$ebug->run;
+@trace = $ebug->stack_trace_human;
+is($trace[0], 'show($koremutake)');
 
 # use YAML; warn Dump \@trace;
 

@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use lib 'lib';
-use Test::More tests => 9;
+use Test::More tests => 22;
 use Devel::ebug;
 
 my $ebug = Devel::ebug->new;
@@ -29,12 +29,59 @@ foreach (1..9) {
   my $pad  = $ebug->pad;
   my @vars;
   foreach my $k (sort keys %$pad) {
-    my $v = $pad->{$k};
+    my $v = $pad->{$k} || 'undef';
     push @vars, "$k=$v";
   }
   my $vars = join ',', @vars;
   $vars ||= '';
-  is($want_vars->{$line}, $vars, "$line has $vars");
+  is($vars, $want_vars->{$line}, "$line has $vars");
   $ebug->step;
 }
+
+$ebug = Devel::ebug->new;
+$ebug->program("t/stack.pl");
+$ebug->load;
+$ebug->break_point(22);
+
+$ebug->run;
+my $pad = $ebug->pad_human;
+
+is($pad->{'$first'}, 'undef');
+is($pad->{'%hash'}, '(...)');
+
+$ebug->run;
+$pad = $ebug->pad;
+is($pad->{'$first'}, '1');
+is_deeply($pad->{'@rest'}, [undef, 2]);
+$pad = $ebug->pad_human;
+is($pad->{'$first'}, '1');
+is($pad->{'@rest'}, "(undef, 2)");
+
+$ebug->run;
+$pad = $ebug->pad_human;
+is($pad->{'$first'}, '123');
+
+$ebug->run;
+$pad = $ebug->pad_human;
+is($pad->{'$first'}, '-0.3');
+
+$ebug->run;
+$pad = $ebug->pad_human;
+is($pad->{'$first'}, "'a'");
+
+$ebug->run;
+$pad = $ebug->pad_human;
+is($pad->{'$first'}, '"orange o rama"');
+
+$ebug->run;
+$pad = $ebug->pad_human;
+is($pad->{'$first'}, '[...]');
+
+$ebug->run;
+$pad = $ebug->pad_human;
+is($pad->{'$first'}, '{...}');
+
+$ebug->run;
+$pad = $ebug->pad_human;
+is($pad->{'$first'}, '$koremutake');
 

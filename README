@@ -60,6 +60,11 @@ DESCRIPTION
     like perl5db.pl. ebug_http is an innovative web-based interface to
     debugging programs.
 
+    Note that if you're debugging a program, you can invoke the debugger in
+    the program itself by using the INT signal:
+
+      kill 2, $$ if $square > 100;
+
     Devel::ebug is a work in progress.
 
     Internally, Devel::ebug consists of two parts. The frontend is

@@ -2,11 +2,13 @@ use Module::Build;
 use strict;
 
 my $requires = {
-  'Devel::StackTrace'    => '0',
+  'Carp'                 => '0',
   'Class::Accessor::Chained::Fast' => '0',
+  'Devel::StackTrace'    => '0',
   'IO::Socket::INET'     => '0',
   'HTTP::Server::Simple::CGI' => '0',
   'List::Util'           => '0',
+  'Module::Pluggable'    => '0',
   'PadWalker'            => '0',
   'PPI'                  => '0',
   'PPI::HTML'            => '0',
