@@ -5,11 +5,12 @@ use Class::Accessor::Chained::Fast;
 use IO::Socket::INET;
 use Proc::Background;
 use Storable qw(nfreeze thaw);
+use String::Koremutake;
 use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
 program socket proc
 package filename line codeline));
-our $VERSION = "0.29";
+our $VERSION = "0.30";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -17,7 +18,12 @@ sub load {
   my $self = shift;
   my $program = $self->program;
 
-  my $command = "$^X -Ilib -d:ebug $program";
+  my $k = String::Koremutake->new;
+  my $rand = int(rand(100_000));
+  my $secret = $k->integer_to_koremutake($rand);
+  my $port   = 3141 + ($rand % 1024);
+
+  my $command = "SECRET=$secret $^X -Ilib -d:ebug $program";
 #  warn "Running: $command\n";
 
   my $proc = Proc::Background->new($command);
@@ -28,7 +34,7 @@ sub load {
   foreach (1..10) {
     $socket = IO::Socket::INET->new(
       PeerAddr => "localhost",
-      PeerPort => '9000',
+      PeerPort => $port,
       Proto    => 'tcp',
       Reuse      => 1,
       ReuserAddr => 1,
@@ -42,6 +48,7 @@ sub load {
   my $response = $self->talk({
     command => "ping",
     version => $VERSION,
+    secret  => $secret,
   });
   my $version = $response->{version};
   die "Client version $version != our version $VERSION" unless $version eq $VERSION;
@@ -142,12 +149,20 @@ sub pad {
 
 # return some lines of code
 sub codelines {
-  my($self, @lines) = @_;
+  my($self) = shift;
+  my($filename, @lines);
+  if (!defined($_[0]) || $_[0] =~ /^\d+$/) {
+    $filename = $self->filename;
+  } else {
+    $filename = shift;
+  }
+  @lines = map { $_ -1 } @_;
   my $response = $self->talk({
-    command => "codelines",
-    codelines => \@lines,
+    command  => "codelines",
+    filename => $filename,
+    lines    => \@lines,
   });
-  return $response->{codelines};
+  return @{$response->{codelines}};
 }
 
 # step onto the next line (going into subroutines)
@@ -194,14 +209,19 @@ use warnings;
 use IO::Socket::INET;
 use PadWalker;
 use Storable qw(nfreeze thaw);
+use String::Koremutake;
 my $socket;
 my $start_server = 1;
+my $mode = "step";
 
 sub start_server {
+  my $k = String::Koremutake->new;
+  my $int = $k->koremutake_to_integer($ENV{SECRET});
+  my $port   = 3141 + ($int % 1024);
   my $server = IO::Socket::INET->new(
     Listen    => 5,
     LocalAddr => 'localhost',
-    LocalPort => '9000',
+    LocalPort => $port,
     Proto     => 'tcp',
     ReuseAddr => 1,
     Reuse     => 1,
@@ -273,6 +293,8 @@ sub DB {
     my $req = get();
     my $command = $req->{command};
     if ($command eq 'ping') {
+      my $secret = $ENV{SECRET};
+      die "Did not pass secret" unless $req->{secret} eq $secret;
       put({
 	version => $Devel::ebug::VERSION,
       });
@@ -284,15 +306,11 @@ sub DB {
 	codeline => $codeline,
       });
     } elsif ($command eq 'codelines') {
-      my $codelines;
-      foreach my $line (@{$req->{codelines}}) {
-	my $codeline = $dbline[$line];
-	next unless defined $codeline;
-	chomp $codeline;
-	$codelines->{$line} = $codeline;
-      }
+      my $filename = $req->{filename};
+      my @lines    = @{$req->{lines}};
+      my @codelines = fetch_codelines($filename, @lines);
       put ({
-	codelines => $codelines,
+	codelines => \@codelines,
       });
     } elsif ($command eq 'subroutine') {
       put ({
@@ -304,12 +322,14 @@ sub DB {
       });
     } elsif ($command eq 'step') {
       put({});
+      $mode = "step"; # single step (into subroutines)
       last; # and out of the loop, onto the next command
     } elsif ($command eq 'next') {
       put({});
-      $DB::single = 2; # single step (but over subroutines)
+      $mode = "next"; # single step (but over subroutines)
       last; # and out of the loop, onto the next command
     } elsif ($command eq 'run') {
+      $mode = "run"; # run until break point
       put ({});
       if (@watch_points) {
 	# watch points, let's go slow
@@ -327,6 +347,7 @@ sub DB {
       my $eval = $req->{eval};
       local $SIG{__WARN__} = sub {};
       my $v = eval "package $package; $eval";
+      put ({eval => $@ }) if $@;
       put ({eval => $v });
     } elsif ($command eq 'break_point') {
       set_break_point($req->{filename}, $req->{line}, $req->{condition});
@@ -352,24 +373,19 @@ sub sub {
   my(@args) = @_;
   my $sub = $DB::sub;
 
-  my $step_over = $DB::single == 2;
-  $DB::single = 1 if $step_over;
-
   push @single_stack, $DB::single;
   $stack_depth++;;
 
-  $DB::single = 0 if $step_over;
+  $DB::single = 0 if defined $mode && $mode eq 'next';
 
   no strict 'refs';
   if (wantarray) {
     my @ret = &$sub;
-    $DB::single = 1 if $DB::single == 2;
     $DB::single = pop @single_stack;
     $stack_depth--;
     return @ret;
   } else {
     my $ret = &$sub;
-    $DB::single = 1 if $DB::single == 2;
     $DB::single = pop @single_stack;
     $stack_depth--;
     return $ret;
@@ -399,6 +415,24 @@ sub find_subroutine {
     return $sub;
   }
   return '';
+}
+
+sub fetch_codelines {
+  my($filename, @lines) = @_;
+  use vars qw(@dbline %dbline);
+  *dbline = $main::{ '_<' . $filename };
+  my @codelines = @dbline;
+
+  # defined!
+  @codelines = grep  { defined  } @codelines;
+  # remove newlines
+  @codelines = map { $_ =~ s/\n$//; $_ } @codelines;
+  # we run it with -d:ebug, so remove this extra line
+  @codelines = grep  { $_ ne 'use Devel::ebug;' } @codelines;
+  if (@lines) {
+    @codelines = @codelines[@lines];
+  }
+  return @codelines;
 }
 
 # set a break point
@@ -478,7 +512,10 @@ L<Devel::ebug>, which you interact with. The frontend starts the code
 you are debugging in the background under the backend (running it
 under perl -d:ebug code.pl). The backend starts a TCP server, which
 the frontend then connects to, and uses this to drive the
-backend. This adds some flexibilty in the debugger.
+backend. This adds some flexibilty in the debugger. There is some
+minor security in the client/server startup (a secret word), and a
+random port is used from 3141-4165 so that multiple debugging sessions
+can happen concurrently.
 
 =head1 CONSTRUCTOR
 
@@ -551,9 +588,23 @@ executed:
 
 =head2 codelines
 
-The codelines method returns a span of lines from the current file:
+The codelines method returns lines of code.
 
-  my $codelines = $ebug->codelines(10 .. 20);
+It can return all the code lines in the current file:
+
+  my @codelines = $ebug->codelines();
+
+It can return a span of code lines from the current file:
+
+  my @codelines = $ebug->codelines(1, 3, 4, 5);
+
+It can return all the code lines in a file:
+
+  my @codelines = $ebug->codelines("t/Calc.pm");
+
+It can return a span of code lines in a file:
+
+  my @codelines = $ebug->codelines("t/Calc.pm", 5, 6);
 
 =head2 eval
 

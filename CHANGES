@@ -1,4 +1,17 @@
 Revision history for Perl module Devel::ebug
 
+0.30 Thu Mar 31 00:13:13 CST 2005
+     - autrijus noticed that 0.29 shipped with a broken ebug. to keep
+       me from embarassing myself in future, there is now an ebug.t
+       which uses the newly-released Test::Expect
+     - codelines() now returns an array
+     - codelines() now returns the whole file if no line numbers are
+       passed
+     - codelines() can now return the source code of files other than
+       the currently executing program
+     - added some security to the TCP connection (port, secret)
+     - added a new "y" to ebug, which YAML::Dump's variables
+     - minor code cleanups
+
 0.29 Tue Mar 29 21:02:59 CST 2005
      - initial release

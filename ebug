@@ -4,9 +4,13 @@ use warnings;
 use lib 'lib';
 use Devel::ebug;
 use Term::ReadLine;
+use YAML;
+
+my $filename = shift;
+die "Usage: ebug filename\n" unless $filename;
 
 my $ebug = Devel::ebug->new;
-$ebug->program(shift);
+$ebug->program($filename);
 $ebug->load;
 
 print "* Welcome to Devel::ebug $Devel::ebug::VERSION\n";
@@ -23,7 +27,7 @@ while (1) {
   $command = $last_command if ($command eq "");
 
   if ($command eq 'h') {
-    print "Commands:
+    print 'Commands:
 
     b Set breakpoint at a line number (eg: b 6, b code.t 6, b code.t 6 $x > 7,
       b Calc::fib)
@@ -34,17 +38,18 @@ while (1) {
     r Run until next breakpoint
     s Step (steps into subroutine calls)
     w Set a watchpoint (eg: w $t > 10)
+    y Dump a variable using YAML (eg: d $x)
     q Quit
-";
+';
   } elsif ($command eq 'l') {
     my @span = ($ebug->line-4 .. $ebug->line+4);
-    @span = grep { $_ >= 0 } @span;
-    my $codelines = $ebug->codelines(@span);
+    @span = grep { $_ > 0 } @span;
+    my @codelines = $ebug->codelines(@span);
     my @break_points = $ebug->break_points();
     my %break_points;
     $break_points{$_}++ foreach @break_points;
     foreach my $s (@span) {
-      my $codeline = $codelines->{$s};
+      my $codeline = $codelines[$s -1 ];
       next unless defined $codeline;
       if ($s == $ebug->line) {
 	print "*";
@@ -64,7 +69,11 @@ while (1) {
   } elsif ($command eq 's') {
     $ebug->step;
   } elsif ($command =~ /^e (.+)/) {
-    print $ebug->eval($1) . "\n";
+    my $v = $ebug->eval($1) || "";
+    print "$v\n";
+  } elsif ($command =~ /^y (.+)/) {
+    my $v = $ebug->eval($1) || "";
+    print Dump($v);
   } elsif ($command eq 'n') {
     $ebug->next;
   } elsif ($command eq 'r') {

@@ -12,6 +12,7 @@ t/calc.pl
 t/Calc.pm
 t/calc_oo.pl
 t/codelines.t
+t/ebug.t
 t/eval.t
 t/oo.t
 t/pad.t

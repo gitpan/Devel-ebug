@@ -50,7 +50,9 @@ DESCRIPTION
     are debugging in the background under the backend (running it under perl
     -d:ebug code.pl). The backend starts a TCP server, which the frontend
     then connects to, and uses this to drive the backend. This adds some
-    flexibilty in the debugger.
+    flexibilty in the debugger. There is some minor security in the
+    client/server startup (a secret word), and a random port is used from
+    3141-4165 so that multiple debugging sessions can happen concurrently.
 
 CONSTRUCTOR
   new
@@ -113,9 +115,23 @@ METHODS
       print "Code: "          . $ebug->codeline   . "\n";
 
   codelines
-    The codelines method returns a span of lines from the current file:
+    The codelines method returns lines of code.
 
-      my $codelines = $ebug->codelines(10 .. 20);
+    It can return all the code lines in the current file:
+
+      my @codelines = $ebug->codelines();
+
+    It can return a span of code lines from the current file:
+
+      my @codelines = $ebug->codelines(1, 3, 4, 5);
+
+    It can return all the code lines in a file:
+
+      my @codelines = $ebug->codelines("t/Calc.pm");
+
+    It can return a span of code lines in a file:
+
+      my @codelines = $ebug->codelines("t/Calc.pm", 5, 6);
 
   eval
     The eval method evaluates Perl code in the current program and returns

@@ -10,6 +10,9 @@ WriteMakefile
                            'PadWalker' => '0',
                            'Proc::Background' => '0',
                            'Storable' => '0',
+                           'String::Koremutake' => '0',
+                           'Test::Differences' => '0',
+                           'Test::Expect' => '0',
                            'Test::More' => '0'
                          },
           'INSTALLDIRS' => 'site',

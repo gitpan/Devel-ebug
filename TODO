@@ -1,17 +1,14 @@
 Things it would be good to have in Devel::ebug:
 
-Make codelines return a list
-Make codelines() return the whole file
 Test with bigger examples
 Return from subroutine
 Stack trace
 Delete break points
 Args: print argument list of current function
 Tidy up code
-Documentation
 Make plugins work
-Test ebug
-Add some security to the TCP connection (port, password)
-Add way to get source code of an entire file
 Merge watch points and break points
 GUI debugger
+Use Class::ISA to show inheritance
+Test ebug more
+Deal with signals
