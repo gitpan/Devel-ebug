@@ -10,7 +10,7 @@ use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
 program socket proc
 package filename line codeline finished));
-our $VERSION = "0.32";
+our $VERSION = "0.33";
 
 # let's run the code under our debugger and connect to the server it
 # starts up

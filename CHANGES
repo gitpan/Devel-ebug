@@ -1,5 +1,8 @@
 Revision history for Perl module Devel::ebug
 
+0.33 Fri Apr  1 16:40:43 CST 2005
+     - update the manifest, doh (it's been a long week)
+
 0.32 Fri Apr  1 14:09:00 CST 2005
      - added "ebug_http" to script_files so that it will get installed
 
