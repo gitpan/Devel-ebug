@@ -1,3 +1,4 @@
+#!perl
 use warnings;
 use strict;
 use lib 'lib';
@@ -7,6 +8,41 @@ my $filename = shift;
 die "Usage: ebug_http filename\n" unless $filename;
 
 my $server = Devel::ebug::HTTP->new();
-$server->port(8080);
+my $port = 8080;
+$server->port($port);
 $server->program($filename);
+$^O =~ /mswin32/i and system("start http://localhost:$port/#top");
+$^O =~ /darwin/i and system("open http://localhost:$port/#top");
 $server->run();
+
+__END__
+
+=head1 NAME
+
+Devel::ebug - A simple, extensible Perl debugger
+
+=head1 SYNOPSIS
+
+  % ebug_http calc.pl
+
+=head1 DESCRIPTION
+
+ebug is a web-based front end to L<Devel::ebug>. It is a simple Perl
+debugger. When run, it will report back how to contact its front page.
+
+Under Mac OS X and Windows it will open the browser for you.
+
+=head1 SEE ALSO
+
+L<Devel::ebug>
+
+=head1 AUTHOR
+
+Leon Brocard, C<< <acme@astray.com> >>
+
+=head1 COPYRIGHT
+
+Copyright (C) 2005, Leon Brocard
+
+This program is free software; you can redistribute it or modify it
+under the same terms as Perl itself.

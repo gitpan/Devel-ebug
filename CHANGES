@@ -1,5 +1,32 @@
 Revision history for Perl module Devel::ebug
 
+0.34 Sat Apr  2 15:39:25 CST 2005
+     - give ebug_http a hashbang line (spotted by obra, who complains
+       all the time ;-)
+     - make Devel::ebug::HTTP return full HTTP requests
+     - basic docs for ebug and ebug_http
+     - ebug_http now opens the browser for you under Mac OS X and
+       Windows (patch by Johan Lindstrom)
+     - ebug now has the ability to always list the lines around the IP
+       - L toggles (patch by Johan Lindstrom)
+     - fix a problem where we were displaying the wrong codelines in
+       modules with POD
+     - now use the environment instead of the command line to pass the
+       secret for portability (patch by Johan Lindstrom)
+     - in ebug_http, we now jump to the current line (patch by Johan
+       Lindstrom)
+     - in ebug_http, make our actions POSTs, for they change state
+     - in ebug_http, cache the call to PPI::HTML
+     - in ebug_http, link module names to search.cpan.org
+     - in ebug_http, syntax highlight single and double-quoted string
+     - tweak Devel::ebug's introductory docs
+     - added break_point_delete method which deletes a break point
+     - added stack_trace method which provides basic stack trace
+       information using Devel::StackTrace
+     - in ebug_http, added a slightly ugly stack trace 
+     - added return(@values) method to return your own values from a
+       subroutine
+
 0.33 Fri Apr  1 16:40:43 CST 2005
      - update the manifest, doh (it's been a long week)
 

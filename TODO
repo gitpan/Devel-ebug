@@ -1,22 +1,29 @@
 Things it would be good to have in Devel::ebug:
 
-POD docs for ebug
-POD docs for ebug_http
-Test ebug_http
 Add more Ajax to ebug_http
-Deal with signals
-Allow return() to return straight away with a value
-Stack trace
-Tidy up code
-Test with bigger examples
-Delete break points
+Add more features to ebug_http
+Allow debugging of regexes
+Allow stepping backwards
+Allow stepping backwards in ebug_http via the browser's back button
 Args: print argument list of current function
+Better error message for when server goes away (storable)
+Deal with signals
+Don't quit on end of program, allow restart
+Emacs Devel::ebug mode
+Make break_point_subroutine take a condition
 Make plugins work
 Merge watch points and break points
-GUI debugger
-Use Class::ISA to show inheritance
-Test ebug more
-Test coverage
-Don't quit on end of program, allow restart
+Pretty print variables
+Return list/listrefs and hash/hashrefs depending on context
+Steal some pretty icons / logo for ebug_http
 Switch from PPI to Perl::Tidy for highlighting
+Tab completion of variables in ebug
+Test coverage
+Test ebug more
+Test ebug_http
+Test minicpan
+Test with bigger examples
+Tidy up code
+Tooltips for ebug_http
+Use Class::ISA to show inheritance
 

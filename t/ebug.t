@@ -19,16 +19,19 @@ expect_like(qr/Welcome to Devel::ebug $version/);
 expect_like(qr{main\(t/calc.pl#3\): my \$q = 1;});
 expect("h", 'Commands:
 
-    b Set breakpoint at a line number (eg: b 6, b code.t 6, b code.t 6 $x > 7,
+    b Set break point at a line number (eg: b 6, b code.pl 6, b code.pl 6 $x > 7,
       b Calc::fib)
+    d Delete a break point (d 6, d code.pl 6)
     e Eval Perl code and print the result (eg: e $x+$y)
     f Show all the filenames loaded
-    l Show codelines
+    l List codelines
+    L List codelines always (toggle)
     n Next (steps over subroutine calls)
     p Show pad
     r Run until next break point or watch point
-  ret Return from subroutine
+  ret Return from subroutine  (eg: ret, ret 3.141)
     s Step (steps into subroutine calls)
+    T Show a stack trace
     w Set a watchpoint (eg: w $t > 10)
     y Dump a variable using YAML (eg: d $x)
     q Quit

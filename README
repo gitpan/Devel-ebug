@@ -20,6 +20,8 @@ SYNOPSIS
       $ebug->break_point("t/Calc.pm", 29);
       $ebug->break_point("t/Calc.pm", 29, '$i == 2');
       $ebug->break_point_subroutine("main::add");
+      $ebug->break_point_delete(29);
+      $ebug->break_point_delete("t/Calc.pm", 29);
       my @filenames    = $ebug->filenames();
       my @break_points = $ebug->break_points();
       $ebug->watch_point('$x > 100');
@@ -31,8 +33,9 @@ SYNOPSIS
         print "Variable: $k = $v\n";
       }
       my $v = $ebug->eval('2 ** $exp');
-      print "Finished!\n" if $ebug->finished;
+      my @frames = $ebug->stack_trace;
       $ebug->return;
+      print "Finished!\n" if $ebug->finished;
 
 DESCRIPTION
     A debugger is a computer program that is used to debug other programs.
@@ -40,11 +43,15 @@ DESCRIPTION
     Using this module, you may easily write a Perl debugger to debug your
     programs. Alternatively, it comes with an interactive debugger, ebug.
 
-    The reasoning behind building Devel::ebug is that the current Perl
-    debugger, perl5db.pl, is very crufty, hard to use and extend and has no
-    tests. Devel::ebug provides a simple programmatic interface to debugging
-    programs, which is well tested. This makes it easier to build debuggers
-    on top of Devel::ebug, be they console-, curses-, GUI- or Ajax-based.
+    perl5db.pl, Perl's current debugger is currently 2,600 lines of magic
+    and special cases. The code is nearly unreadable: fixing bugs and adding
+    new features is fraught with difficulties. The debugger has no test
+    suite which has caused breakage with changes that couldn't be properly
+    tested. It will also not debug regexes. Devel::ebug is aimed at fixing
+    these problems and delivering a replacement debugger which provides a
+    well-tested simple programmatic interface to debugging programs. This
+    makes it easier to build debuggers on top of Devel::ebug, be they
+    console-, curses-, GUI- or Ajax-based.
 
     Devel::ebug is a work in progress.
 
@@ -96,6 +103,16 @@ METHODS
     that must be true for execution to stop at the break point:
 
       $ebug->break_point("t/Calc.pm", 29, '$i == 2');
+
+  break_point_delete
+    The break_point_delete method deletes an existing break point. A break
+    point at a line number in the current file can be deleted:
+
+      $ebug->break_point_delete(29);
+
+    A break point at a line number in a file can be deleted:
+
+      $ebug->break_point_delete("t/Calc.pm", 29);
 
   break_point_subroutine
     The break_point_subroutine method sets a break point in a program right
@@ -189,6 +206,11 @@ METHODS
 
       $ebug->return;
 
+    It can also return your own values from a subroutine, for testing
+    purposes:
+
+      $ebug->return(3.141);
+
   run
     The run subroutine starts executing the code. It will only stop on a
     break point or watch point.
@@ -206,6 +228,16 @@ METHODS
     code:
 
       print "In subroutine: " . $ebug->subroutine . "\n";
+
+  stack_trace
+    The stack_trace method returns the current stack trace, using
+    Devel::StackTrace. It returns a list of Devel::StackTraceFrame methods:
+
+      my @frames = $ebug->stack_trace;
+      foreach my $frame (@trace) {
+        print $frame->package, "->",$frame->subroutine, 
+        "(", $frame->filename, "#", $frame->line, ")\n";
+      }
 
   watch_point
     The watch point method sets a watch point. A watch point has a

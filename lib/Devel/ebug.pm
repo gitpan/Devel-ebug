@@ -10,7 +10,7 @@ use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
 program socket proc
 package filename line codeline finished));
-our $VERSION = "0.33";
+our $VERSION = "0.34";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -23,11 +23,12 @@ sub load {
   my $secret = $k->integer_to_koremutake($rand);
   my $port   = 3141 + ($rand % 1024);
 
-  my $command = "SECRET=$secret $^X -Ilib -d:ebug $program";
+  $ENV{SECRET} = $secret;
+  my $command = "$^X -Ilib -d:ebug $program";
 #  warn "Running: $command\n";
-
   my $proc = Proc::Background->new($command);
   $self->proc($proc);
+  $ENV{SECRET} = "";
 
   # Lets
   my $socket;
@@ -103,7 +104,7 @@ sub eval {
 
 # set a break point (by default in the current file)
 sub break_point {
-  my($self) = shift;
+  my $self = shift;
   my($filename, $line, $condition);
   if ($_[0] =~ /^\d+$/) {
     $filename = $self->filename;
@@ -116,6 +117,26 @@ sub break_point {
     filename  => $filename,
     line      => $line,
     condition => $condition,
+  });
+}
+
+# delete a break point (by default in the current file)
+sub break_point_delete {
+  my $self = shift;
+  my($filename, $line);
+  my $first = shift;
+  if ($first =~ /^\d+$/) {
+    $line = $first;
+    $filename = $self->filename;
+  } else {
+    $filename = $first;
+    $line = shift;
+  }
+
+  my $response = $self->talk({
+    command   => "break_point_delete",
+    filename  => $filename,
+    line      => $line,
   });
 }
 
@@ -149,10 +170,22 @@ sub run {
   $self->basic; # get basic information for the new line
 }
 
+# return the stack trace
+sub stack_trace {
+  my($self) = @_;
+  my $response = $self->talk({ command => "stack_trace" });
+  return @{$response->{stack_trace}};
+}
+
 # return from a subroutine
 sub return {
-  my($self) = @_;
-  my $response = $self->talk({ command => "return" });
+  my($self, @values) = @_;
+  my $values;
+  $values = \@values if @values;
+  my $response = $self->talk({
+    command => "return",
+    values  => $values,
+ });
   $self->basic; # get basic information for the new line
 }
 
@@ -223,6 +256,7 @@ package DB;
 use strict;
 use warnings;
 use IO::Socket::INET;
+use Devel::StackTrace;
 use PadWalker;
 use Storable qw(nfreeze thaw);
 use String::Koremutake;
@@ -261,13 +295,12 @@ sub get {
 
 my @watch_points;
 my $watch_single;
-
-my @single_stack;
-my $stack_depth = 0;
+my @stack;
 
 sub DB {
   my($package, $filename, $line) = caller;
   start_server() if $start_server;
+
   # single step
   my $old_single = $DB::single;
   $DB::single = 1;
@@ -356,10 +389,13 @@ sub DB {
       $mode = "next"; # single step (but over subroutines)
       last; # and out of the loop, onto the next command
     } elsif ($command eq 'return') {
+      if ($req->{values}) {
+	$stack[0]->{return} = $req->{values};
+      }
       put({});
       $mode = "run"; # run until returned from subroutine
       $DB::single = 0; # run
-      $single_stack[-1] = 1; # single step higher up
+      $stack[-1]->{single} = 1; # single step higher up
       last; # and out of the loop, onto the next command
     } elsif ($command eq 'run') {
       $mode = "run"; # run until break point
@@ -385,14 +421,22 @@ sub DB {
     } elsif ($command eq 'break_point') {
       set_break_point($req->{filename}, $req->{line}, $req->{condition});
       put ({});
+    } elsif ($command eq 'break_point_delete') {
+      delete_break_point($req->{filename}, $req->{line});
+      put ({});
     } elsif ($command eq 'break_point_subroutine') {
       my($filename, $start, $end) = $DB::sub{$req->{subroutine}} =~ m/^(.+):(\d+)-(\d+)$/;
       set_break_point($filename, $start);
       put({});
     } elsif ($command eq 'break_points') {
-      put({
-	break_points => [sort { $a <=> $b } keys %dbline],
-      });
+      put({ break_points => break_points() });
+    } elsif ($command eq 'stack_trace') {
+      my $trace = Devel::StackTrace->new;
+      my @frames = $trace->frames;
+      # remove our internal frames
+      shift @frames;
+      shift @frames;
+      put({ stack_trace => \@frames });
     } else {
       die "unknown command $command";
     }
@@ -403,24 +447,34 @@ sub sub {
   my(@args) = @_;
   my $sub = $DB::sub;
 
-  push @single_stack, $DB::single;
-  $stack_depth++;;
+  my $frame = {
+    single     => $DB::single,
+  };
+  push @stack, $frame;
 
   $DB::single = 0 if defined $mode && $mode eq 'next';
 
   no strict 'refs';
   if (wantarray) {
     my @ret = &$sub;
-    $DB::single = pop @single_stack;
-    $stack_depth--;
-    return @ret;
+    my $frame = pop @stack;
+    $DB::single = $frame->{single};
+
+    if ($frame->{return}) {
+      return @{$frame->{return}};
+    } else {
+      return @ret;
+    }
   } else {
     my $ret = &$sub;
-    $DB::single = pop @single_stack;
-    $stack_depth--;
-    return $ret;
+    my $frame = pop @stack;
+    $DB::single = $frame->{single};
+    if ($frame->{return}) {
+      return $frame->{return}->[0];
+    } else {
+      return $ret;
+    }
   }
-
 }
 
 # find lexical variables
@@ -453,8 +507,11 @@ sub fetch_codelines {
   *dbline = $main::{ '_<' . $filename };
   my @codelines = @dbline;
 
+  # for modules, not sure why
+  shift @codelines if not defined $codelines[0];
+
   # defined!
-  @codelines = grep  { defined  } @codelines;
+  @codelines = map  { defined($_) ? $_ : ""  } @codelines;
   # remove newlines
   @codelines = map { $_ =~ s/\n$//; $_ } @codelines;
   # we run it with -d:ebug, so remove this extra line
@@ -479,6 +536,24 @@ sub set_break_point {
     $line++;
   }
   $dbline{$line} = $condition;
+}
+
+# delete a break point
+sub delete_break_point {
+  my($filename, $line) = @_;
+  use vars qw(@dbline %dbline);
+  *dbline = $main::{ '_<' . $filename };
+
+  $dbline{$line} = 0;
+}
+
+# return a listref of break points
+sub break_points {
+  return [
+    sort { $a <=> $b }
+    grep { $dbline{$_} }
+    keys %dbline
+  ];
 }
 
 1;
@@ -509,6 +584,8 @@ Devel::ebug - A simple, extensible Perl debugger
   $ebug->break_point("t/Calc.pm", 29);
   $ebug->break_point("t/Calc.pm", 29, '$i == 2');
   $ebug->break_point_subroutine("main::add");
+  $ebug->break_point_delete(29);
+  $ebug->break_point_delete("t/Calc.pm", 29);
   my @filenames    = $ebug->filenames();
   my @break_points = $ebug->break_points();
   $ebug->watch_point('$x > 100');
@@ -520,8 +597,9 @@ Devel::ebug - A simple, extensible Perl debugger
     print "Variable: $k = $v\n";
   }
   my $v = $ebug->eval('2 ** $exp');
-  print "Finished!\n" if $ebug->finished;
+  my @frames = $ebug->stack_trace;
   $ebug->return;
+  print "Finished!\n" if $ebug->finished;
 
 =head1 DESCRIPTION
 
@@ -531,12 +609,15 @@ clean API. Using this module, you may easily write a Perl debugger to
 debug your programs. Alternatively, it comes with an interactive
 debugger, L<ebug>.
 
-The reasoning behind building L<Devel::ebug> is that the current Perl
-debugger, perl5db.pl, is very crufty, hard to use and extend and has
-no tests. L<Devel::ebug> provides a simple programmatic interface to
-debugging programs, which is well tested. This makes it easier to
-build debuggers on top of L<Devel::ebug>, be they console-, curses-,
-GUI- or Ajax-based.
+perl5db.pl, Perl's current debugger is currently 2,600 lines of magic
+and special cases. The code is nearly unreadable: fixing bugs and
+adding new features is fraught with difficulties. The debugger has no
+test suite which has caused breakage with changes that couldn't be
+properly tested. It will also not debug regexes. L<Devel::ebug> is
+aimed at fixing these problems and delivering a replacement debugger
+which provides a well-tested simple programmatic interface to
+debugging programs. This makes it easier to build debuggers on top of
+L<Devel::ebug>, be they console-, curses-, GUI- or Ajax-based.
 
 L<Devel::ebug> is a work in progress.
 
@@ -595,6 +676,17 @@ A break point can be set at a line number in a file with a condition
 that must be true for execution to stop at the break point:
 
   $ebug->break_point("t/Calc.pm", 29, '$i == 2');
+
+=head2 break_point_delete
+
+The break_point_delete method deletes an existing break point. A break
+point at a line number in the current file can be deleted:
+
+  $ebug->break_point_delete(29);
+
+A break point at a line number in a file can be deleted:
+
+  $ebug->break_point_delete("t/Calc.pm", 29);
 
 =head2 break_point_subroutine
 
@@ -701,6 +793,11 @@ subroutine:
 
   $ebug->return;
 
+It can also return your own values from a subroutine, for testing
+purposes:
+
+  $ebug->return(3.141);
+
 =head2 run
 
 The run subroutine starts executing the code. It will only stop on a
@@ -721,6 +818,18 @@ The subroutine method returns the subroutine of the currently working
 code:
 
   print "In subroutine: " . $ebug->subroutine . "\n";
+
+=head2 stack_trace
+
+The stack_trace method returns the current stack trace, using
+L<Devel::StackTrace>. It returns a list of L<Devel::StackTraceFrame>
+methods:
+
+  my @frames = $ebug->stack_trace;
+  foreach my $frame (@trace) {
+    print $frame->package, "->",$frame->subroutine, 
+    "(", $frame->filename, "#", $frame->line, ")\n";
+  }
 
 =head2 watch_point
 

@@ -6,8 +6,10 @@ WriteMakefile
           'VERSION_FROM' => 'lib/Devel/ebug.pm',
           'PREREQ_PM' => {
                            'Class::Accessor::Chained::Fast' => '0',
+                           'Devel::StackTrace' => '0',
                            'HTTP::Server::Simple::CGI' => '0',
                            'IO::Socket::INET' => '0',
+                           'List::Util' => '0',
                            'PPI' => '0',
                            'PPI::HTML' => '0',
                            'PPI::Lexer' => '0',

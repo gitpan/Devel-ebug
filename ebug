@@ -19,15 +19,22 @@ print "* Welcome to Devel::ebug $Devel::ebug::VERSION\n";
 
 my $term = Term::ReadLine->new('ebug');
 my $last_command = "s";
+my $list_always = 0;
+my $list_lines_count = 9;
 
 while (1) {
   if ($ebug->finished) {
     print "ebug: Program finished running!\n";
     exit;
   }
-  print $ebug->subroutine
-    . "(" . $ebug->filename . "#" . $ebug->line . "): "
-    . $ebug->codeline, "\n";
+
+  if($list_always) {
+    show_codelines($codelines, $ebug, $list_lines_count) if($list_always);
+  } else {
+    print $ebug->subroutine
+      . "(" . $ebug->filename . "#" . $ebug->line . "): "
+      . $ebug->codeline, "\n";
+  }
   my $command = $term->readline("ebug: ");
   $command = "q" if not defined $command;
   $command = $last_command if ($command eq "");
@@ -35,42 +42,27 @@ while (1) {
   if ($command eq 'h') {
     print 'Commands:
 
-    b Set breakpoint at a line number (eg: b 6, b code.t 6, b code.t 6 $x > 7,
+    b Set break point at a line number (eg: b 6, b code.pl 6, b code.pl 6 $x > 7,
       b Calc::fib)
+    d Delete a break point (d 6, d code.pl 6)
     e Eval Perl code and print the result (eg: e $x+$y)
     f Show all the filenames loaded
-    l Show codelines
+    l List codelines
+    L List codelines always (toggle)
     n Next (steps over subroutine calls)
     p Show pad
     r Run until next break point or watch point
-  ret Return from subroutine
+  ret Return from subroutine  (eg: ret, ret 3.141)
     s Step (steps into subroutine calls)
+    T Show a stack trace
     w Set a watchpoint (eg: w $t > 10)
     y Dump a variable using YAML (eg: d $x)
     q Quit
 ';
   } elsif ($command eq 'l') {
-    if (not exists $codelines->{$ebug->filename}) {
-      $codelines->{$ebug->filename} = [$ebug->codelines];
-    }
-    my @span = ($ebug->line-4 .. $ebug->line+4);
-    @span = grep { $_ > 0 } @span;
-    my @codelines = @{$codelines->{$ebug->filename}};
-    my @break_points = $ebug->break_points();
-    my %break_points;
-    $break_points{$_}++ foreach @break_points;
-    foreach my $s (@span) {
-      my $codeline = $codelines[$s -1 ];
-      next unless defined $codeline;
-      if ($s == $ebug->line) {
-	print "*";
-      } elsif ($break_points{$s}) {
-	print "b";
-      } else {
-	print " ";
-      }
-      print "$s:$codeline\n";
-    }
+    show_codelines($codelines, $ebug, $list_lines_count);
+  } elsif ($command eq 'L') {
+    $list_always = !$list_always;
   } elsif ($command eq 'p') {
     my $pad = $ebug->pad;
     foreach my $k (sort keys %$pad) {
@@ -89,8 +81,14 @@ while (1) {
     $ebug->next;
   } elsif ($command eq 'r') {
     $ebug->run;
-  } elsif ($command eq 'return') {
-    $ebug->run;
+  } elsif ($command =~ /^ret ?(.*)/) {
+    $ebug->return($1);
+  } elsif ($command eq 'T') {
+    my @trace = $ebug->stack_trace;
+    foreach my $frame (@trace) {
+      print $frame->package, "->",$frame->subroutine, 
+	"(", $frame->filename, "#", $frame->line, ")\n";
+    }
   } elsif ($command eq 'f') {
     print "$_\n" foreach $ebug->filenames;
   } elsif (my($line, $condition) = $command =~ /^b (\d+) ?(.*)/) {
@@ -100,6 +98,10 @@ while (1) {
     $ebug->break_point($1, $2, $3);
   } elsif ($command =~ /^b (.+)/) {
     $ebug->break_point_subroutine($1);
+  } elsif ($command =~ /^d (.+?) (\d+)/) {
+    $ebug->break_point_delete($1, $2);
+  } elsif ($command =~ /^d (\d+)/) {
+    $ebug->break_point_delete($1);
   } elsif ($command =~ /^w (.+)/) {
     my($watch_point) = $command =~ /^w (.+)/;
     $ebug->watch_point($watch_point);
@@ -110,3 +112,62 @@ while (1) {
   }
   $last_command = $command;
 }
+
+sub show_codelines {
+  my ($codelines, $ebug, $list_lines_count) = @_;
+
+  my $line_count = int($list_lines_count / 2);
+
+  if (not exists $codelines->{$ebug->filename}) {
+    $codelines->{$ebug->filename} = [$ebug->codelines];
+  }
+
+  my @span = ($ebug->line-$line_count .. $ebug->line+$line_count);
+  @span = grep { $_ > 0 } @span;
+  my @codelines = @{$codelines->{$ebug->filename}};
+  my @break_points = $ebug->break_points();
+  my %break_points;
+  $break_points{$_}++ foreach @break_points;
+  foreach my $s (@span) {
+    my $codeline = $codelines[$s -1 ];
+    next unless defined $codeline;
+    if ($s == $ebug->line) {
+      print "*";
+    } elsif ($break_points{$s}) {
+      print "b";
+    } else {
+      print " ";
+    }
+    print "$s:$codeline\n";
+  }
+}
+
+__END__
+
+=head1 NAME
+
+Devel::ebug - A simple, extensible Perl debugger
+
+=head1 SYNOPSIS
+
+  % ebug calc.pl
+
+=head1 DESCRIPTION
+
+ebug is an interactive commmand-line front end to L<Devel::ebug>. It
+is a simple Perl debugger, much like perl5db.pl.
+
+=head1 SEE ALSO
+
+L<Devel::ebug>
+
+=head1 AUTHOR
+
+Leon Brocard, C<< <acme@astray.com> >>
+
+=head1 COPYRIGHT
+
+Copyright (C) 2005, Leon Brocard
+
+This program is free software; you can redistribute it or modify it
+under the same terms as Perl itself.

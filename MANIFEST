@@ -24,6 +24,7 @@ t/oo.t
 t/pad.t
 t/pod.t
 t/return.t
+t/stack.t
 t/subroutine.t
 t/watch_point.t
 t/yaml.pl
