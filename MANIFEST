@@ -14,9 +14,13 @@ t/calc_oo.pl
 t/codelines.t
 t/ebug.t
 t/eval.t
+t/filenames.t
+t/koremutake.pl
+t/koremutake.t
 t/oo.t
 t/pad.t
 t/pod.t
+t/return.t
 t/subroutine.t
 t/watch_point.t
 TODO

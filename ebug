@@ -13,12 +13,18 @@ my $ebug = Devel::ebug->new;
 $ebug->program($filename);
 $ebug->load;
 
+my $codelines;
+
 print "* Welcome to Devel::ebug $Devel::ebug::VERSION\n";
 
 my $term = Term::ReadLine->new('ebug');
 my $last_command = "s";
 
 while (1) {
+  if ($ebug->finished) {
+    print "ebug: Program finished running!\n";
+    exit;
+  }
   print $ebug->subroutine
     . "(" . $ebug->filename . "#" . $ebug->line . "): "
     . $ebug->codeline, "\n";
@@ -32,19 +38,24 @@ while (1) {
     b Set breakpoint at a line number (eg: b 6, b code.t 6, b code.t 6 $x > 7,
       b Calc::fib)
     e Eval Perl code and print the result (eg: e $x+$y)
+    f Show all the filenames loaded
     l Show codelines
     n Next (steps over subroutine calls)
     p Show pad
-    r Run until next breakpoint
+    r Run until next break point or watch point
+  ret Return from subroutine
     s Step (steps into subroutine calls)
     w Set a watchpoint (eg: w $t > 10)
     y Dump a variable using YAML (eg: d $x)
     q Quit
 ';
   } elsif ($command eq 'l') {
+    if (not exists $codelines->{$ebug->filename}) {
+      $codelines->{$ebug->filename} = [$ebug->codelines];
+    }
     my @span = ($ebug->line-4 .. $ebug->line+4);
     @span = grep { $_ > 0 } @span;
-    my @codelines = $ebug->codelines(@span);
+    my @codelines = @{$codelines->{$ebug->filename}};
     my @break_points = $ebug->break_points();
     my %break_points;
     $break_points{$_}++ foreach @break_points;
@@ -78,6 +89,10 @@ while (1) {
     $ebug->next;
   } elsif ($command eq 'r') {
     $ebug->run;
+  } elsif ($command eq 'return') {
+    $ebug->run;
+  } elsif ($command eq 'f') {
+    print "$_\n" foreach $ebug->filenames;
   } elsif (my($line, $condition) = $command =~ /^b (\d+) ?(.*)/) {
     undef $condition unless $condition;
     $ebug->break_point($line, $condition);

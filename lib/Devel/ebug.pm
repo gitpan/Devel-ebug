@@ -9,8 +9,8 @@ use String::Koremutake;
 use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
 program socket proc
-package filename line codeline));
-our $VERSION = "0.30";
+package filename line codeline finished));
+our $VERSION = "0.31";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -61,7 +61,9 @@ sub basic {
   my $response = $self->talk({ command => "basic" });
   if (not defined $response) {
     # it dropped off the end of the program
+    $self->finished(1);
   } else {
+    $self->finished(0);
     $self->package ($response->{package });
     $self->filename($response->{filename});
     $self->line    ($response->{line    });
@@ -133,10 +135,24 @@ sub break_points {
   return @{$response->{break_points}};
 }
 
+# list filenames
+sub filenames {
+  my($self) = @_;
+  my $response = $self->talk({ command => "filenames" });
+  return @{$response->{filenames}};
+}
+
 # run until a breakpoint
 sub run {
   my($self) = @_;
   my $response = $self->talk({ command => "run" });
+  $self->basic; # get basic information for the new line
+}
+
+# return from a subroutine
+sub return {
+  my($self) = @_;
+  my $response = $self->talk({ command => "return" });
   $self->basic; # get basic information for the new line
 }
 
@@ -246,6 +262,9 @@ sub get {
 my @watch_points;
 my $watch_single;
 
+my @single_stack;
+my $stack_depth = 0;
+
 sub DB {
   my($package, $filename, $line) = caller;
   start_server() if $start_server;
@@ -305,6 +324,14 @@ sub DB {
 	line     => $line,
 	codeline => $codeline,
       });
+    } elsif ($command eq 'filenames') {
+      my %filenames;
+      foreach my $sub (keys %DB::sub) {
+	my($filename, $start, $end) = $DB::sub{$sub} =~ m/^(.+):(\d+)-(\d+)$/;
+	next if $filename =~ /^\(eval/;
+	$filenames{$filename}++;
+      }
+      put({ filenames => [sort keys %filenames] });
     } elsif ($command eq 'codelines') {
       my $filename = $req->{filename};
       my @lines    = @{$req->{lines}};
@@ -327,6 +354,12 @@ sub DB {
     } elsif ($command eq 'next') {
       put({});
       $mode = "next"; # single step (but over subroutines)
+      last; # and out of the loop, onto the next command
+    } elsif ($command eq 'return') {
+      put({});
+      $mode = "run"; # run until returned from subroutine
+      $DB::single = 0; # run
+      $single_stack[-1] = 1; # single step higher up
       last; # and out of the loop, onto the next command
     } elsif ($command eq 'run') {
       $mode = "run"; # run until break point
@@ -365,9 +398,6 @@ sub DB {
     }
   }
 }
-
-my @single_stack;
-my $stack_depth = 0;
 
 sub sub {
   my(@args) = @_;
@@ -479,6 +509,7 @@ Devel::ebug - A simple, extensible Perl debugger
   $ebug->break_point("t/Calc.pm", 29);
   $ebug->break_point("t/Calc.pm", 29, '$i == 2');
   $ebug->break_point_subroutine("main::add");
+  my @filenames    = $ebug->filenames();
   my @break_points = $ebug->break_points();
   $ebug->watch_point('$x > 100');
   my $codelines = $ebug->codelines(@span);
@@ -489,6 +520,8 @@ Devel::ebug - A simple, extensible Perl debugger
     print "Variable: $k = $v\n";
   }
   my $v = $ebug->eval('2 ** $exp');
+  print "Finished!\n" if $ebug->finished;
+  $ebug->return;
 
 =head1 DESCRIPTION
 
@@ -619,6 +652,19 @@ The filename method returns the filename of the currently running code:
 
   print "In filename: "   . $ebug->filename   . "\n";
 
+=head2 filenames
+
+The filenames method returns a list of the filenames of all the files
+currently loaded:
+
+  my @filenames = $ebug->filenames();
+
+=head2 finished
+
+The finished method returns whether the program has finished running:
+
+  print "Finished!\n" if $ebug->finished;
+
 =head2 line
 
 The line method returns the line number of the statement about to be
@@ -646,6 +692,14 @@ The package method returns the package of the currently running code:
     my $v = $pad->{$k};
     print "Variable: $k = $v\n";
   }
+
+=head2 return
+
+The return subroutine returns from a subroutine. It continues running
+the subroutine, then single steps when the program flow has exited the
+subroutine:
+
+  $ebug->return;
 
 =head2 run
 

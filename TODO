@@ -1,14 +1,22 @@
 Things it would be good to have in Devel::ebug:
 
-Test with bigger examples
-Return from subroutine
+POD docs for ebug
+POD docs for ebug_http
+Test ebug_http
+Add more Ajax to ebug_http
+Deal with signals
+Allow return() to return straight away with a value
 Stack trace
+Tidy up code
+Test with bigger examples
 Delete break points
 Args: print argument list of current function
-Tidy up code
 Make plugins work
 Merge watch points and break points
 GUI debugger
 Use Class::ISA to show inheritance
 Test ebug more
-Deal with signals
+Test coverage
+Don't quit on end of program, allow restart
+Switch from PPI to Perl::Tidy for highlighting
+

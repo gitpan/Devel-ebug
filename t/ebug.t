@@ -22,10 +22,12 @@ expect("h", 'Commands:
     b Set breakpoint at a line number (eg: b 6, b code.t 6, b code.t 6 $x > 7,
       b Calc::fib)
     e Eval Perl code and print the result (eg: e $x+$y)
+    f Show all the filenames loaded
     l Show codelines
     n Next (steps over subroutine calls)
     p Show pad
-    r Run until next breakpoint
+    r Run until next break point or watch point
+  ret Return from subroutine
     s Step (steps into subroutine calls)
     w Set a watchpoint (eg: w $t > 10)
     y Dump a variable using YAML (eg: d $x)

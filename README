@@ -20,6 +20,7 @@ SYNOPSIS
       $ebug->break_point("t/Calc.pm", 29);
       $ebug->break_point("t/Calc.pm", 29, '$i == 2');
       $ebug->break_point_subroutine("main::add");
+      my @filenames    = $ebug->filenames();
       my @break_points = $ebug->break_points();
       $ebug->watch_point('$x > 100');
       my $codelines = $ebug->codelines(@span);
@@ -30,6 +31,8 @@ SYNOPSIS
         print "Variable: $k = $v\n";
       }
       my $v = $ebug->eval('2 ** $exp');
+      print "Finished!\n" if $ebug->finished;
+      $ebug->return;
 
 DESCRIPTION
     A debugger is a computer program that is used to debug other programs.
@@ -144,6 +147,17 @@ METHODS
 
       print "In filename: "   . $ebug->filename   . "\n";
 
+  filenames
+    The filenames method returns a list of the filenames of all the files
+    currently loaded:
+
+      my @filenames = $ebug->filenames();
+
+  finished
+    The finished method returns whether the program has finished running:
+
+      print "Finished!\n" if $ebug->finished;
+
   line
     The line method returns the line number of the statement about to be
     executed:
@@ -167,6 +181,13 @@ METHODS
         my $v = $pad->{$k};
         print "Variable: $k = $v\n";
       }
+
+  return
+    The return subroutine returns from a subroutine. It continues running
+    the subroutine, then single steps when the program flow has exited the
+    subroutine:
+
+      $ebug->return;
 
   run
     The run subroutine starts executing the code. It will only stop on a

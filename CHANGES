@@ -1,5 +1,15 @@
 Revision history for Perl module Devel::ebug
 
+0.31
+     - added return(), which returns from a subroutine
+     - fix bug with 'l' showing inaccurate lines in ebug
+     - added filenames() method which returns a list of the filenames
+       of all the files currently loaded
+     - added a String::Koremutake test
+     - added a new finished() method to return whether the program has
+       finished running (spotted by clkao)
+     - added ebug_http, which presents a web interface to debugging
+
 0.30 Thu Mar 31 00:13:13 CST 2005
      - autrijus noticed that 0.29 shipped with a broken ebug. to keep
        me from embarassing myself in future, there is now an ebug.t
