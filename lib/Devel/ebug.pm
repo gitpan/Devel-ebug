@@ -4,13 +4,14 @@ use warnings;
 use Class::Accessor::Chained::Fast;
 use IO::Socket::INET;
 use Proc::Background;
+use Scalar::Util qw(blessed);
 use Storable qw(nfreeze thaw);
 use String::Koremutake;
 use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
 program socket proc
 package filename line codeline finished));
-our $VERSION = "0.34";
+our $VERSION = "0.35";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -102,6 +103,21 @@ sub eval {
   return $response->{eval};
 }
 
+# undo
+sub undo {
+  my($self, $levels) = @_;
+  $levels ||= 1;
+  my $response = $self->talk({ command => "commands" });
+  my @commands = @{$response->{commands}};
+  pop @commands foreach 1..$levels;
+
+  my $proc = $self->proc;
+  $proc->die;
+  $self->load;
+  $self->talk($_) foreach @commands;
+  $self->basic;
+}
+
 # set a break point (by default in the current file)
 sub break_point {
   my $self = shift;
@@ -175,6 +191,43 @@ sub stack_trace {
   my($self) = @_;
   my $response = $self->talk({ command => "stack_trace" });
   return @{$response->{stack_trace}};
+}
+
+# return the stack trace in a human-readable format
+sub stack_trace_human {
+  my($self) = @_;
+  my @human;
+  my @stack = $self->stack_trace;
+  foreach my $frame (@stack) {
+    my $subroutine = $frame->subroutine;
+    my $package = $frame->package;
+    my @args = $frame->args;
+    my $first = $args[0];
+    my $first_class = ref($first);
+#    warn "first class: $first_class, package: $package, subroutine: $subroutine\n";
+    if (defined $first && blessed($first) && $subroutine =~ /^${first_class}::/ &&
+	$subroutine =~ /^$package/) {
+      $subroutine =~ s/^${first_class}:://;
+      shift @args;
+      push @human, "\$self->$subroutine" . $self->stack_trace_human_args(@args);
+    } elsif (defined $first && blessed($first) && $subroutine =~ /^${first_class}::/) {
+      $subroutine =~ s/^${first_class}:://;
+      shift @args;
+      my($name) = $first_class =~ /([^:]+)$/;
+      $first = '$' . lc($name);
+      push @human, "$first->$subroutine" . $self->stack_trace_human_args(@args);
+    } elsif ($subroutine =~ s/^${package}:://) {
+      push @human, "$subroutine" . $self->stack_trace_human_args(@args);
+    } else {
+      die "Unknown case";
+    }
+  }
+  return @human;
+}
+
+sub stack_trace_human_args {
+  my($self, @args) = @_;
+  return '(' . join(", ", @args) . ')';
 }
 
 # return from a subroutine
@@ -263,6 +316,7 @@ use String::Koremutake;
 my $socket;
 my $start_server = 1;
 my $mode = "step";
+my @commands;
 
 sub start_server {
   my $k = String::Koremutake->new;
@@ -286,10 +340,17 @@ sub put {
   $socket->print($data . "\n");
 }
 
+# Commands that change state, so record them in case we need to undo
+my @command_record = qw(break_point break_point_delete
+  break_point_subroutine eval next step return run watch_point);
+my %command_record;
+$command_record{$_}++ foreach @command_record;
+
 sub get {
   exit unless $socket;
   my $data = <$socket>;
   my $req = thaw(pack("h*", $data));
+  push @commands, $req if $command_record{$req->{command}};
   return $req;
 }
 
@@ -379,6 +440,10 @@ sub DB {
     } elsif ($command eq 'pad') {
       put ({
 	pad => find_pad($package),
+      });
+    } elsif ($command eq 'commands') {
+      put ({
+	commands => \@commands,
       });
     } elsif ($command eq 'step') {
       put({});
@@ -598,6 +663,8 @@ Devel::ebug - A simple, extensible Perl debugger
   }
   my $v = $ebug->eval('2 ** $exp');
   my @frames = $ebug->stack_trace;
+  my @frames2 = $ebug->stack_trace_human;
+  $ebug->undo;
   $ebug->return;
   print "Finished!\n" if $ebug->finished;
 
@@ -618,6 +685,11 @@ aimed at fixing these problems and delivering a replacement debugger
 which provides a well-tested simple programmatic interface to
 debugging programs. This makes it easier to build debuggers on top of
 L<Devel::ebug>, be they console-, curses-, GUI- or Ajax-based.
+
+There are currently two user interfaces to L<Devel::debug>, L<ebug>
+and L<ebug_http>. L<ebug> is a console-based interface to debugging
+programs, much like perl5db.pl. L<ebug_http> is an innovative
+web-based interface to debugging programs.
 
 L<Devel::ebug> is a work in progress.
 
@@ -830,6 +902,29 @@ methods:
     print $frame->package, "->",$frame->subroutine, 
     "(", $frame->filename, "#", $frame->line, ")\n";
   }
+
+=head2 stack_trace_human
+
+The stack_trace_human method returns the current stack trace in a human-readable format:
+
+  my @frames = $ebug->stack_trace_human;
+  foreach my $frame (@trace) {
+    print "$frame\n";
+  }
+
+=head2 undo
+
+The undo method undos the last action. It accomplishes this by
+restarting the process and passing (almost) all the previous commands
+to it. Note that commands which do not change state are
+ignored. Commands that change state are: break_point, break_point_delete,
+break_point_subroutine, eval, next, step, return, run and watch_point.
+
+  $ebug->undo;
+
+It can also undo multiple commands:
+
+  $ebug->undo(3);
 
 =head2 watch_point
 

@@ -34,6 +34,8 @@ SYNOPSIS
       }
       my $v = $ebug->eval('2 ** $exp');
       my @frames = $ebug->stack_trace;
+      my @frames2 = $ebug->stack_trace_human;
+      $ebug->undo;
       $ebug->return;
       print "Finished!\n" if $ebug->finished;
 
@@ -52,6 +54,11 @@ DESCRIPTION
     well-tested simple programmatic interface to debugging programs. This
     makes it easier to build debuggers on top of Devel::ebug, be they
     console-, curses-, GUI- or Ajax-based.
+
+    There are currently two user interfaces to Devel::debug, ebug and
+    ebug_http. ebug is a console-based interface to debugging programs, much
+    like perl5db.pl. ebug_http is an innovative web-based interface to
+    debugging programs.
 
     Devel::ebug is a work in progress.
 
@@ -238,6 +245,28 @@ METHODS
         print $frame->package, "->",$frame->subroutine, 
         "(", $frame->filename, "#", $frame->line, ")\n";
       }
+
+  stack_trace_human
+    The stack_trace_human method returns the current stack trace in a
+    human-readable format:
+
+      my @frames = $ebug->stack_trace_human;
+      foreach my $frame (@trace) {
+        print "$frame\n";
+      }
+
+  undo
+    The undo method undos the last action. It accomplishes this by
+    restarting the process and passing (almost) all the previous commands to
+    it. Note that commands which do not change state are ignored. Commands
+    that change state are: break_point, break_point_delete,
+    break_point_subroutine, eval, next, step, return, run and watch_point.
+
+      $ebug->undo;
+
+    It can also undo multiple commands:
+
+      $ebug->undo(3);
 
   watch_point
     The watch point method sets a watch point. A watch point has a

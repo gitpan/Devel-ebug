@@ -26,6 +26,7 @@ t/pod.t
 t/return.t
 t/stack.t
 t/subroutine.t
+t/undo.t
 t/watch_point.t
 t/yaml.pl
 TODO

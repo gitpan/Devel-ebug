@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name: Devel-ebug
-version: 0.34
+version: 0.35
 author:
   - Leon Brocard, C<< <acme@astray.com> >>
 abstract: A simple, extensible Perl debugger
@@ -16,6 +16,7 @@ requires:
   PPI::Lexer: 0
   PadWalker: 0
   Proc::Background: 0
+  Scalar::Util: 0
   Storable: 0
   String::Koremutake: 0
   Template: 0
@@ -26,13 +27,13 @@ requires:
 provides:
   DB:
     file: lib/Devel/ebug.pm
-    version: 0.34
+    version: 0.35
   Devel::ebug:
     file: lib/Devel/ebug.pm
-    version: 0.34
+    version: 0.35
   Devel::ebug::HTTP:
     file: lib/Devel/ebug/HTTP.pm
   filename:
     file: lib/Devel/ebug.pm
-    version: 0.34
+    version: 0.35
 generated_by: Module::Build version 0.2605

@@ -16,6 +16,7 @@ my $build = Module::Build->new(
     'PPI::HTML'            => '0',
     'PPI::Lexer'           => '0',
     'Proc::Background'     => '0',
+    'Scalar::Util'         => '0',
     'Storable'             => '0',
     'String::Koremutake'   => '0',
     'Template'             => '0',

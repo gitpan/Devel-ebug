@@ -8,15 +8,21 @@ use PPI;
 use PPI::HTML;
 use PPI::Lexer;
 use Template;
-use List::Util qw/max/;
+use List::Util qw(max);
+use Scalar::Util qw(blessed);
 use base qw(Class::Accessor::Chained::Fast HTTP::Server::Simple::CGI);
 __PACKAGE__->mk_accessors(qw(program ebug));
 
 my $tt = Template->new;
 my $lines_visible_above_count = 10;
+my $sequence = 1;
 
 sub handle_request {
   my ($self, $cgi) = @_;
+
+  if ($cgi->self_url =~ /favicon.ico/) {
+    return;
+  }
 
   unless (defined $self->ebug) {
     my $ebug = Devel::ebug->new();
@@ -33,13 +39,29 @@ sub handle_request {
     $ebug->next;
   } elsif ($action eq 'return') {
     $ebug->return;
+  } elsif ($action eq 'undo') {
+    $ebug->undo;
+  }
+
+  my $cgi_sequence = $cgi->param('sequence');
+  if (defined $cgi_sequence && $cgi_sequence < $sequence) {
+    $ebug->undo($sequence - $cgi_sequence);
+    $sequence = $cgi_sequence;
+  }
+  $sequence++;
+
+  my $finished = $ebug->finished;
+  if ($finished) {
+    $ebug->load;
   }
 
   my $vars = {
-    self => $self,
-    ebug => $ebug,
     codelines => $self->codelines,
-    stack_trace => [$ebug->stack_trace],
+    ebug => $ebug,
+    finished => $finished,
+    self => $self,
+    sequence => $sequence,
+    stack_trace_human => [$ebug->stack_trace_human],
     top_visible_line => max(1, $ebug->line - $lines_visible_above_count + 1),
   };
 
@@ -48,7 +70,7 @@ sub handle_request {
   $tt->process(\$template, $vars, \$html) || die $tt->error();
 
   print "HTTP/1.0 200 OK\r\n";
-  print "Content-Type: text/html\r\nContent-Length: ",
+  print "Content-Type: text/html\r\nContent-Cache: No\r\nContent-Length: ",
   length($html), "\r\n\r\n", $html;
 }
 
@@ -71,11 +93,20 @@ sub codelines {
     "$split$_";
   } split /$split/, $pretty;
 
+  # right-justify the line number
+  @lines = map {
+    s{<span class="line_number">(\d+):}{
+      my $size = 4 - (length($1));
+      $size = 0 if $size < 0;
+      '<span class="line_number">' . ("&nbsp;" x $size) . "$1:"}e;
+    $_;
+  } @lines;
+
   # link module names to search.cpan.org
   @lines = map {
     $_ =~ s{<span class="word">([^<]+?::[^<]+?)</span>}{<span class="word"><a href="http://search.cpan.org/perldoc?$1">$1</a></span>};
     $_;
-} @lines;
+  } @lines;
 
   $self->{codelines_cache}->{$filename} = \@lines;
   return \@lines;
@@ -160,8 +191,9 @@ function register(e) {
     letter = String.fromCharCode(key).toLowerCase();
     switch (letter) {
         case "n": myaction = "next"; break
-        case "s": myaction = "step"; break
         case "r": myaction = "return"; break
+        case "s": myaction = "step"; break
+        case "u": myaction = "undo"; break
     }
     if (myaction) {
       document.hiddenform.myaction.value = myaction;
@@ -176,11 +208,14 @@ function register(e) {
 <div id="body">
 <p>
 [% self.program %] [% ebug.subroutine %]([% ebug.filename %]#[% ebug.line %])
+[% IF finished %]<b>Program finished, restarted!</b>[% END %]
 <br/>
 <form name="myform" method="post">
+ <input type="hidden" name="sequence" value="[% sequence %]">
  <input type="submit" name="myaction" value="Step">
  <input type="submit" name="myaction" value="Next">
  <input type="submit" name="myaction" value="Return">
+ <input type="submit" name="myaction" value="Undo">
 </form>
 </p>
 
@@ -201,11 +236,11 @@ function register(e) {
 [% END %]
 
 <h3>Stack trace</h3>
-[% FOREACH frame IN stack_trace %]
-  [% frame.subroutine -%]
-([%- FOREACH arg IN frame.args %][% arg %][% UNLESS loop.last %], [% END %][% END %])
-<br/>
+<small>
+[% FOREACH frame IN stack_trace_human %]
+  [% frame %]<br/>
 [% END %]
+</small>
 </div>
 
 <div id="version">
@@ -214,6 +249,7 @@ function register(e) {
 
 <form name="hiddenform" method="post" style="visibility:hidden;">
  <input type="hidden" name="myaction" value="nothing">
+ <input type="hidden" name="sequence" value="[% sequence %]">
  <input type="submit" name="foo" value="Return">
 </form>
 </body>

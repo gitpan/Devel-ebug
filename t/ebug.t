@@ -32,6 +32,7 @@ expect("h", 'Commands:
   ret Return from subroutine  (eg: ret, ret 3.141)
     s Step (steps into subroutine calls)
     T Show a stack trace
+    u Undo (eg: u, u 4)
     w Set a watchpoint (eg: w $t > 10)
     y Dump a variable using YAML (eg: d $x)
     q Quit

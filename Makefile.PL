@@ -15,6 +15,7 @@ WriteMakefile
                            'PPI::Lexer' => '0',
                            'PadWalker' => '0',
                            'Proc::Background' => '0',
+                           'Scalar::Util' => '0',
                            'Storable' => '0',
                            'String::Koremutake' => '0',
                            'Template' => '0',
