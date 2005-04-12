@@ -6,7 +6,7 @@ use String::Koremutake;
 use YAML;
 use Module::Pluggable search_path => 'Devel::ebug::Backend::Plugin', require => 1;
 
-our $VERSION = "0.37";
+our $VERSION = "0.38";
 
 use vars qw(@dbline %dbline);
 
@@ -21,7 +21,7 @@ $SIG{INT} = sub {
 my $context = {
   mode => "step",
   stack => [],
-  start_server => 1,
+  initialise => 1,
   watch_points => [],
 };
 
@@ -34,7 +34,7 @@ sub DB {
   my($package, $filename, $line) = caller;
   ($context->{package}, $context->{filename}, $context->{line}) = ($package, $filename, $line);
 
-  start_server() if $context->{start_server};
+  initialise() if $context->{initialise};
 
   # we're here because of a signal, reset the flag
   if ($DB::signal) {
@@ -82,20 +82,6 @@ sub DB {
   $context->{codeline} = (fetch_codelines($filename, $line - 1))[0];
   chomp $context->{codeline};
 
-
-  
-  # FIXME: should this be done only once?
-  foreach my $plugin (__PACKAGE__->plugins) {
-      my $sub = $plugin->can("register_commands");
-    next unless $sub;
-    my %new = &$sub;
-    foreach my $command (keys %new) {
-        $commands{$command} = $new{$command};
-    }
-
-  }
-
-  
   while (1) {
     my $req = get();
     my $command = $req->{command};
@@ -105,8 +91,8 @@ sub DB {
       put($sub->($req, $context));
 
       if ($context->{last}) {
-    delete $context->{last};
-    last;
+	delete $context->{last};
+	last;
       }
     } else {
       die "unknown command $command";
@@ -116,8 +102,7 @@ sub DB {
 
 
 
-sub start_server {
-
+sub initialise {
   my $k = String::Koremutake->new;
   my $int = $k->koremutake_to_integer($ENV{SECRET});
   my $port   = 3141 + ($int % 1024);
@@ -130,7 +115,17 @@ sub start_server {
     Reuse     => 1,
   ) || die $!;
   $context->{socket} = $server->accept;
-  $context->{start_server} = 0;
+
+  foreach my $plugin (__PACKAGE__->plugins) {
+    my $sub = $plugin->can("register_commands");
+    next unless $sub;
+    my %new = &$sub;
+    foreach my $command (keys %new) {
+      $commands{$command} = $new{$command};
+    }
+  }
+ 
+  $context->{initialise} = 0;
 }
 
 sub put {
@@ -196,7 +191,7 @@ sub fetch_codelines {
   @codelines = map  { defined($_) ? $_ : ""  } @codelines;
   # remove newlines
   @codelines = map { $_ =~ s/\s+$//; $_ } @codelines;
-  # we run it with -d:ebug, so remove this extra line
+  # we run it with -d:ebug::Backend, so remove this extra line
   @codelines = grep  { $_ ne 'use Devel::ebug::Backend;' } @codelines;
   if (@lines) {
     @codelines = @codelines[@lines];

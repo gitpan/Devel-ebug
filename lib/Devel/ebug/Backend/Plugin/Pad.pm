@@ -1,4 +1,6 @@
 package Devel::ebug::Backend::Plugin::Pad;
+use strict;
+use warnings;
 use PadWalker;
 
 sub register_commands {

@@ -14,7 +14,7 @@ use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
 program socket proc
 package filename line codeline finished));
-our $VERSION = "0.37";
+our $VERSION = "0.38";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -41,7 +41,7 @@ sub load {
   $self->proc($proc);
   $ENV{SECRET} = "";
 
-  # Lets
+  # try and connect to the server
   my $socket;
   foreach (1..10) {
     $socket = IO::Socket::INET->new(

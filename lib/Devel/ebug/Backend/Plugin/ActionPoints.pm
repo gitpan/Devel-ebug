@@ -1,5 +1,6 @@
 package Devel::ebug::Backend::Plugin::ActionPoints;
-  
+use strict;
+use warnings;
 
 sub register_commands {
   return (

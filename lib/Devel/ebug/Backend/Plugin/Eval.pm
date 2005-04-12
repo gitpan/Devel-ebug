@@ -1,4 +1,6 @@
 package Devel::ebug::Backend::Plugin::Eval;
+use strict;
+use warnings;
   
 
 sub register_commands {

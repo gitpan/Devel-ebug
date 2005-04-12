@@ -1,4 +1,6 @@
 package Devel::ebug::Plugin::StackTrace;
+use strict;
+use warnings;
 use Scalar::Util qw(blessed);
 use base qw(Exporter);
 our @EXPORT = qw(stack_trace stack_trace_human stack_trace_human_args);

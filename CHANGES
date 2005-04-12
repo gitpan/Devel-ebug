@@ -1,5 +1,10 @@
 Revision history for Perl module Devel::ebug
 
+0.38 Tue Apr 12 14:47:24 BST 2005
+     - optimisation: only scan for plugins on start of backend
+     - be sure to use strict and warnings in the plugins
+     - in ebug and ebug_http, allow examining a variable using YAML
+
 0.37 Tue Apr  5 22:55:18 CST 2005
      - moved ebug code into Devel::ebug::Console
      - moved the backend into Devel::ebug::Backend

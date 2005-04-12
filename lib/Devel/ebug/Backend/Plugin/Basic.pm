@@ -1,8 +1,9 @@
 package Devel::ebug::Backend::Plugin::Basic;
+use strict;
+use warnings;
 
 sub register_commands {
     return ( basic => { sub => \&basic } );
-
 }
 
 sub basic {

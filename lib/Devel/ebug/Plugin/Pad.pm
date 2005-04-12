@@ -1,4 +1,6 @@
 package Devel::ebug::Plugin::Pad;
+use strict;
+use warnings;
 use base qw(Exporter);
 our @EXPORT = qw(pad pad_human);
 

@@ -1,4 +1,7 @@
 package Devel::ebug::Backend::Plugin::Run;
+use strict;
+use warnings;
+
 sub register_commands {
     return (
       next        => { sub => \&next, record => 1 },

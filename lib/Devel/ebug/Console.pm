@@ -63,7 +63,7 @@ sub run {
     T Show a stack trace
     u Undo (eg: u, u 4)
     w Set a watchpoint (eg: w $t > 10)
-    y Dump a variable using YAML (eg: d $x)
+    x Dump a variable using YAML (eg: x $object)
     q Quit
 ';
     } elsif ($command eq 'l') {
@@ -84,9 +84,6 @@ sub run {
     } elsif ($command =~ /^e (.+)/) {
       my $v = $ebug->eval($1) || "";
       print "$v\n";
-    } elsif ($command =~ /^y (.+)/) {
-      my $v = $ebug->eval($1) || "";
-      print Dump($v);
     } elsif ($command eq 'n') {
       $ebug->next;
     } elsif ($command eq 'r') {
@@ -118,6 +115,9 @@ sub run {
       $ebug->undo($1);
     } elsif ($command eq 'q') {
       exit;
+    } elsif ($command =~ /^x (.+)/) {
+      my $v = $ebug->eval("use YAML; Dump($1)") || "";
+      print "$v\n";
     } else {
       print "Unknown ebug command '$command'!\n";
     }

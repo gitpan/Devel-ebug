@@ -1,4 +1,6 @@
 package Devel::ebug::Plugin::Basic;
+use strict;
+use warnings;
 use base qw(Exporter);
 our @EXPORT = qw(basic);
 

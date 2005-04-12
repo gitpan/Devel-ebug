@@ -1,4 +1,6 @@
 package Devel::ebug::Backend::Plugin::StackTrace;
+use strict;
+use warnings;
 use Devel::StackTrace;
 
 sub register_commands {

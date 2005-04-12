@@ -11,7 +11,7 @@ use Template;
 use List::Util qw(max);
 use Scalar::Util qw(blessed);
 use base qw(Class::Accessor::Chained::Fast HTTP::Server::Simple::CGI);
-__PACKAGE__->mk_accessors(qw(program ebug));
+__PACKAGE__->mk_accessors(qw(program ebug cgi vars));
 
 my $tt = Template->new;
 my $lines_visible_above_count = 10;
@@ -69,19 +69,22 @@ from the web browser.  This dispatches to all the other methods.
 
 sub handle_request {
   my ($self, $cgi) = @_;
+  my $vars; # goes to the template
+
+  # Save the request for now
+  $self->cgi($cgi);
+  # Clear out template variables
+  $self->vars({});
 
   # ignore requests that we don't want to handle
-  if ($self->skip_request($cgi))
-    { return }
+  return if ($self->skip_request());
 
   # start the ebug process if we need to
-  unless ($self->ebug)
-    { $self->create_ebug }
+  $self->create_ebug unless ($self->ebug);
 
   # pass commands we've been passed to the ebug
   my $action = lc($cgi->param('myaction') || '');
-  my $break_point = $cgi->param('break_point');
-  $self->tell_ebug($action, $break_point);
+  $self->tell_ebug($action);
 
   # check we're doing things in the right order
   my $cgi_sequence = $cgi->param('sequence');
@@ -96,7 +99,7 @@ sub handle_request {
     $self->ebug->load;
   }
 
-  print $self->create_output($cgi);
+  print $self->create_output();
 }
 
 =item skip_request
@@ -107,7 +110,8 @@ a 404.  Currently used for not creating favicons.
 =cut
 
 sub skip_request {
-  my ($self, $cgi) = @_;
+  my ($self) = @_;
+  my $cgi = $self->cgi;
   my $url = $cgi->self_url;
 
   # no, we don't have a favourite icon
@@ -147,11 +151,19 @@ Tell the ebug process what's going on.
 =cut
 
 sub tell_ebug {
-  my ($self, $action, $arg) = @_;
+  my ($self, $action) = @_;
+  my $cgi = $self->cgi;
   my $ebug = $self->ebug;
 
   if ($action eq 'break point:') {
-    $ebug->break_point($arg);
+    $ebug->break_point($cgi->param('break_point'));
+  } elsif ($action eq 'examine') {
+    my $variable = $cgi->param('variable');
+    my $value   = $ebug->eval("use YAML; Dump($variable)") || "";
+    $self->vars->{examine} = {
+      variable => $variable,
+      value    => $value,
+    };
   } if ($action eq 'next') {
     $ebug->next;
   } elsif ($action eq 'return') {
@@ -179,10 +191,10 @@ documented below.
 =cut
 
 sub create_output {
-  my($self, $cgi) = @_;
+  my($self) = @_;
 
   # process the template
-  my $html = $self->create_html($cgi);
+  my $html = $self->create_html();
 
   return $self->header($html)
          . "\r\n"
@@ -196,15 +208,17 @@ Create the html.
 =cut
 
 sub create_html {
-  my($self, $cgi) = @_;
+  my($self) = @_;
+  my $cgi  = $self->cgi;
   my $ebug = $self->ebug;
 
   my $break_points;
   $break_points->{$_}++ foreach $ebug->break_points;
 
-  my $url = $cgi->url . "/#top";
+  my $url = $cgi->url . "/";
 
   my $vars = {
+    %{$self->vars},
     break_points => $break_points,
     codelines => $self->codelines,
     ebug => $ebug,
@@ -277,7 +291,7 @@ been passed (including the server status code.)
 =cut
 
 sub header {
-  my ($self,$html) = @_;
+  my ($self, $html) = @_;
 
   return "HTTP/1.0 200 OK\r\n"
     . "Content-Type: text/html\r\n"
@@ -388,7 +402,7 @@ function register(e) {
 <p>
 [% self.program | html %] [% subroutine %]([% ebug.filename | html %]#[% ebug.line %])
 </p>
-<form name="myform" method="post" action="[% url %]">
+<form name="myform" method="post" action="[% url %]#top">
  <input type="hidden" name="sequence" value="[% sequence %]"/>
  <input type="submit" name="myaction" value="Step"/>
  <input type="submit" name="myaction" value="Next"/>
@@ -414,7 +428,7 @@ function register(e) {
 <h3>Variables in [% subroutine %]</h3>
 [% pad = ebug.pad_human %]
 [% FOREACH k IN pad.keys.sort %]
-  <span class="symbol">[% k | html %]</span> = <span class="number">[% pad.$k | html %]</span><br/>
+  <span class="symbol"><a href="[% url %]?sequence=[% sequence %]&amp;variable=[% k %]&amp;myaction=examine#top">[% k | html %]</a></span> = <span class="number">[% pad.$k | html %]</span><br/>
 [% END %]
 
 <h3>Stack trace</h3>
@@ -423,13 +437,21 @@ function register(e) {
   [% frame %]<br/>
 [% END %]
 </small>
+
+[% IF examine.variable %]
+<h3>Variable [% examine.variable %]</h3>
+<small>
+[% e = examine.value.replace('\n','<br/>'); e %]
+</small>
+[% END %]
+
 </div>
 
 <div id="version">
 <a href="http://search.cpan.org/dist/Devel-ebug/">Devel::ebug</a> [% ebug.VERSION %]
 </div>
 
-<form name="hiddenform" method="post" style="visibility:hidden;" action="[% url %]">
+<form name="hiddenform" method="post" style="visibility:hidden;" action="[% url %]#top">
  <input type="hidden" name="myaction" value="nothing"/>
  <input type="hidden" name="sequence" value="[% sequence %]"/>
  <input type="submit" name="foo" value="Return"/>

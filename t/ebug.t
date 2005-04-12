@@ -38,7 +38,7 @@ expect("h", 'Commands:
     T Show a stack trace
     u Undo (eg: u, u 4)
     w Set a watchpoint (eg: w $t > 10)
-    y Dump a variable using YAML (eg: d $x)
+    x Dump a variable using YAML (eg: x $object)
     q Quit
 main(t/calc.pl#3): my $q = 1;');
 

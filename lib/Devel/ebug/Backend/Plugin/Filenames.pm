@@ -1,4 +1,6 @@
 package Devel::ebug::Backend::Plugin::Filenames;
+use strict;
+use warnings;
 
 sub register_commands {
     return ( filenames   => { sub => \&filenames } );

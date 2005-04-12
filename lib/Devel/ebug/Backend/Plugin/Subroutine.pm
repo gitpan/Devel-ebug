@@ -1,4 +1,6 @@
 package Devel::ebug::Backend::Plugin::Subroutine;
+use strict;
+use warnings;
 
 sub register_commands {
   return ( subroutine  => { sub => \&subroutine } );

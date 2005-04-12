@@ -1,7 +1,8 @@
 package Devel::ebug::Plugin::ActionPoints;
+use strict;
+use warnings;
 use base qw(Exporter);
 our @EXPORT = qw(break_point break_point_delete break_point_subroutine break_points watch_point);
-
 
 # set a break point (by default in the current file)
 sub break_point {

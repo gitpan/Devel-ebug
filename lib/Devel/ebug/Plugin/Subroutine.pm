@@ -1,4 +1,6 @@
 package Devel::ebug::Plugin::Subroutine;
+use strict;
+use warnings;
 use base qw(Exporter);
 our @EXPORT = qw(subroutine);
 

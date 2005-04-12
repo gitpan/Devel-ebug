@@ -1,4 +1,6 @@
 package Devel::ebug::Plugin::Run;
+use strict;
+use warnings;
 use base qw(Exporter);
 our @EXPORT = qw(undo run return step next);
 
