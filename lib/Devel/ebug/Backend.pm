@@ -6,7 +6,7 @@ use String::Koremutake;
 use YAML;
 use Module::Pluggable search_path => 'Devel::ebug::Backend::Plugin', require => 1;
 
-our $VERSION = "0.39";
+our $VERSION = "0.40";
 
 use vars qw(@dbline %dbline);
 

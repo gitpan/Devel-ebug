@@ -1,13 +1,15 @@
 ---
 name: Devel-ebug
-version: 0.39
+version: 0.40
 author:
   - 'Leon Brocard, C<< <acme@astray.com> >>'
 abstract: 'A simple, extensible Perl debugger'
 license: perl
 requires:
   Carp: 0
-  Catalyst: 5.00
+  Catalyst: 5.02
+  Catalyst::Plugin::Static: 0.07
+  Catalyst::View::TT: 0.11
   Class::Accessor::Chained::Fast: 0
   Devel::StackTrace: 0
   File::Find: 0
@@ -34,13 +36,13 @@ requires:
 provides:
   DB:
     file: lib/Devel/ebug/Backend/Plugin/Eval.pm
-    version: 0.39
+    version: 0.40
   DB::fake:
     file: lib/Devel/ebug/Backend.pm
-    version: 0.39
+    version: 0.40
   Devel::ebug:
     file: lib/Devel/ebug.pm
-    version: 0.39
+    version: 0.40
   Devel::ebug::Backend::Plugin::ActionPoints:
     file: lib/Devel/ebug/Backend/Plugin/ActionPoints.pm
   Devel::ebug::Backend::Plugin::Basic:
@@ -95,5 +97,5 @@ provides:
     file: lib/Devel/ebug/Plugin/Subroutine.pm
   filename:
     file: lib/Devel/ebug.pm
-    version: 0.39
+    version: 0.40
 generated_by: Module::Build version 0.2605

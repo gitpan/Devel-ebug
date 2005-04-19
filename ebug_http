@@ -1,5 +1,8 @@
 #!perl
-BEGIN { $ENV{CATALYST_ENGINE} = 'Server' }
+BEGIN { 
+    $ENV{CATALYST_ENGINE} = 'HTTP';
+    $ENV{CATALYST_SCRIPT_GEN} = 2;
+}  
 use strict;
 use FindBin;
 use lib 'lib';
@@ -18,40 +21,39 @@ $Devel::ebug::HTTP::ebug = $ebug;
 #$^O =~ /mswin32/i and system("start http://localhost:$port/#top");
 #$^O =~ /darwin/i and system("open http://localhost:$port/#top &");
 
+print "You can connect to your server at --> http://localhost:$port/ <--\n";
+print "Ignore line below (temporary bug in Catalyst)\n";
+
 Devel::ebug::HTTP->run($port);
 
 1;
+
 __END__
 
 =head1 NAME
 
-server - Catalyst Testserver
+ebug_http - A simple, extensible web Perl debugger
 
 =head1 SYNOPSIS
 
-server.pl [options]
-
- Options:
-   -? -help    display this help and exits
-   -p -port    port (defaults to 3000)
-
- See also:
-   perldoc Catalyst::Manual
-   perldoc Catalyst::Manual::Intro
+  % ebug_http calc.pl
 
 =head1 DESCRIPTION
 
-Run a Catalyst Testserver for this application.
+ebug is a web-based front end to L<Devel::ebug>. It is a simple Perl
+debugger. When run, it will report back how to contact its front page.
+
+=head1 SEE ALSO
+
+L<Devel::ebug>
 
 =head1 AUTHOR
 
-Sebastian Riedel, C<sri@oook.de>
+Leon Brocard, C<< <acme@astray.com> >>
 
 =head1 COPYRIGHT
 
-Copyright 2004 Sebastian Riedel. All rights reserved.
+Copyright (C) 2005, Leon Brocard
 
-This library is free software. You can redistribute it and/or modify it under
-the same terms as perl itself.
-
-=cut
+This program is free software; you can redistribute it or modify it
+under the same terms as Perl itself.
