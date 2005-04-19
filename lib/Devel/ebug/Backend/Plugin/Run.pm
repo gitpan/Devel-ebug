@@ -29,7 +29,10 @@ sub return {
   }
   $context->{mode} = "run"; # run until returned from subroutine
   $DB::single = 0; # run
-  $context->{stack}->[-1]->{single} = 1; # single step higher up
+
+  if ($context->{stack}->[-1]) {
+    $context->{stack}->[-1]->{single} = 1; # single step higher up
+  }
   $context->{last} = 1;      # and out of the loop
   return {};
 }

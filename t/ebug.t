@@ -6,9 +6,9 @@ use Devel::ebug;
 use Test::More;
 
 eval "use Test::Expect";
-plan skip_all => "Test::Expect required for testing POD: $@" if $@;
+plan skip_all => "Test::Expect required for testing ebug: $@" if $@;
 eval "use Expect::Simple";
-plan skip_all => "Expect::Simple required for testing POD: $@" if $@;
+plan skip_all => "Expect::Simple required for testing ebug: $@" if $@;
 plan tests => 15;
 
 expect_run(
@@ -23,23 +23,25 @@ expect_like(qr/Welcome to Devel::ebug $version/);
 expect_like(qr{main\(t/calc.pl#3\): my \$q = 1;});
 expect("h", 'Commands:
 
-    b Set break point at a line number (eg: b 6, b code.pl 6, b code.pl 6 $x > 7,
+      b Set break point at a line number (eg: b 6, b code.pl 6, b code.pl 6 $x > 7,
       b Calc::fib)
-    d Delete a break point (d 6, d code.pl 6)
-    e Eval Perl code and print the result (eg: e $x+$y)
-    f Show all the filenames loaded
-    l List codelines or set number of codelines to list (eg: l, l 20)
-    L List codelines always (toggle)
-    n Next (steps over subroutine calls)
-    p Show pad
-    r Run until next break point or watch point
-  ret Return from subroutine  (eg: ret, ret 3.141)
-    s Step (steps into subroutine calls)
-    T Show a stack trace
-    u Undo (eg: u, u 4)
-    w Set a watchpoint (eg: w $t > 10)
-    x Dump a variable using YAML (eg: x $object)
-    q Quit
+      d Delete a break point (d 6, d code.pl 6)
+      e Eval Perl code and print the result (eg: e $x+$y)
+      f Show all the filenames loaded
+      l List codelines or set number of codelines to list (eg: l, l 20)
+      L List codelines always (toggle)
+      n Next (steps over subroutine calls)
+      o Output (show STDOUT, STDERR)
+      p Show pad
+      r Run until next break point or watch point
+    ret Return from subroutine  (eg: ret, ret 3.141)
+restart Restart the program
+      s Step (steps into subroutine calls)
+      T Show a stack trace
+      u Undo (eg: u, u 4)
+      w Set a watchpoint (eg: w $t > 10)
+      x Dump a variable using YAML (eg: x $object)
+      q Quit
 main(t/calc.pl#3): my $q = 1;');
 
 expect("b 9", 'main(t/calc.pl#3): my $q = 1;');

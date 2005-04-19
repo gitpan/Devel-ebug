@@ -16,6 +16,7 @@ ebug - A simple, extensible console Perl debugger
 =head1 SYNOPSIS
 
   % ebug calc.pl
+  % ebug "add.pl 3 4"
 
 =head1 DESCRIPTION
 

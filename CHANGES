@@ -1,5 +1,27 @@
 Revision history for Perl module Devel::ebug
 
+0.39 Tue Apr 19 13:16:51 BST 2005
+     - major refactoring of ebug_http to now use Catalyst
+     - we now capture STDOUT, STDERR - their contents are available
+       using the new output method
+     - ebug now shows STDOUT, STDERR
+     - ebug_http now shows STDOUT, STDERR
+     - no longer stop processing as the program exits
+     - tab completion of variables in ebug (x $var), as suggested by
+       Autrijus
+     - in ebug_http, new dynamic tooltips to show the value of
+       variables on the current line, using prototype and overlib
+     - "return" not in a subroutine is now the same as "run" instead
+       of giving an error (spotted by clkao)
+     - documented that ebug and ebug_http can run programs with
+       arguments by quoting them (spotted by clkao)
+     - minor output patch for ebug.t
+     - tweaked the test to skip Test::Expect under Windows
+     - new yaml method to return the YAML representation of a variable
+     - improved undo tests
+     - better use of PPI (spotted by Alias)
+     - install the templates / JavaScript / CSS / images to sitelib
+
 0.38 Tue Apr 12 14:47:24 BST 2005
      - optimisation: only scan for plugins on start of backend
      - be sure to use strict and warnings in the plugins

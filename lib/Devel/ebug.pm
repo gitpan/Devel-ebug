@@ -14,7 +14,7 @@ use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
 program socket proc
 package filename line codeline finished));
-our $VERSION = "0.38";
+our $VERSION = "0.39";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -122,6 +122,7 @@ Devel::ebug - A simple, extensible Perl debugger
   $ebug->step;
   $ebug->step;
   $ebug->next;
+  my($stdout, $stderr) = $ebug->output;
   $ebug->break_point(6);
   $ebug->break_point(6, '$e = 4');
   $ebug->break_point("t/Calc.pm", 29);
@@ -140,6 +141,7 @@ Devel::ebug - A simple, extensible Perl debugger
     print "Variable: $k = $v\n";
   }
   my $v = $ebug->eval('2 ** $exp');
+  my $y = $ebug->yaml('$z');
   my @frames = $ebug->stack_trace;
   my @frames2 = $ebug->stack_trace_human;
   $ebug->undo;
@@ -326,6 +328,13 @@ any subroutine calls but does not step through them.
 
   $ebug->next;
 
+=head2 output
+
+The output method returns any content the program has output to either
+standard output or standard error:
+
+  my($stdout, $stderr) = $ebug->output;
+
 =head2 package
 
 The package method returns the package of the currently running code:
@@ -416,6 +425,13 @@ condition, and the debugger will stop run-ing as soon as this
 condition is true:
 
   $ebug->watch_point('$x > 100');
+
+=head2 yaml
+
+The eval method evaluates Perl code in the current program and returns
+the result of YAML's Dump() method:
+
+  my $y = $ebug->yaml('$z');
 
 =head1 SEE ALSO
 

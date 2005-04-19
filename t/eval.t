@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use lib 'lib';
-use Test::More tests => 4;
+use Test::More tests => 5;
 use Devel::ebug;
 
 my $ebug = Devel::ebug->new;
@@ -16,3 +16,4 @@ $ebug->step;
 is($ebug->eval('$e'), 4);
 $ebug->step;
 is($ebug->eval('$e'), 5);
+is($ebug->yaml('$e'), "--- 5\n");

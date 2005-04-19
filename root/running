@@ -1,0 +1,58 @@
+[% page_title = ebug.program _ " " _  subroutine _ "(" _ ebug.filename _ "#" _ ebug.line _ ") " _ ebug.codeline %]
+[% INCLUDE layout_head %]
+
+<div id="body">
+<p>[% ebug.program | html %] [% subroutine %]([% ebug.filename | html %]#[% ebug.line %])</p>
+<form name="myform" method="post" action="[% url %]#top">
+ <input type="hidden" name="sequence" value="[% sequence %]"/>
+ <input type="submit" name="myaction" value="Step"/>
+ <input type="submit" name="myaction" value="Next"/>
+ <input type="submit" name="myaction" value="Restart"/>
+ <input type="submit" name="myaction" value="Return"/>
+ <input type="submit" name="myaction" value="Run"/>
+ <input type="submit" name="myaction" value="Undo"/>
+ <input type="submit" name="myaction" value="Break point:"/>
+ <input type="text" name="break_point" value=""/>
+</form>
+
+<div id="code">
+[% FOREACH i IN [1..codelines.size] %]
+[% IF i == top_visible_line %]<a name="top"></a>[% END %]
+[% IF i == ebug.line %]<div id="current_line">[% END -%]
+[% IF break_points.$i %]B[% ELSE %]&nbsp;[% END -%]
+[% codelines.$i %]
+[% IF i == ebug.line %]</div>[% END %]
+[% END %]
+</div>
+</div>
+
+<div id="pad">
+<h3>Variables in [% subroutine %]</h3>
+[% pad = ebug.pad_human %]
+[% FOREACH k IN pad.keys.sort %]
+  <span class="symbol"><a style="text-decoration: none" href="#" onmouseover="return tooltip('[% k %]')" onmouseout="return nd();">[% k | html %]</a></span> = <span class="number">[% pad.$k | html %]</span><br/>
+[% END %]
+
+<h3>Stack trace</h3>
+<small>
+[% FOREACH frame IN stack_trace_human %]
+  [% frame %]<br/>
+[% END %]
+</small>
+
+[% IF examine.variable %]
+<h3>Variable [% examine.variable %]</h3>
+<small>
+[% e = examine.value.replace('\n','<br/>'); e %]
+</small>
+[% END %]
+
+<h3>STDOUT</h3>
+<small>[% stdout | html | replace('\n','<br/>') %]</small>
+
+<h3>STDERR</h3>
+<small>[% stderr | html | replace('\n','<br/>') %]</small>
+
+</div>
+
+[% INCLUDE layout_tail %]

@@ -24,23 +24,34 @@ sub run {
   print "* Welcome to Devel::ebug $Devel::ebug::VERSION\n";
 
   my $term = Term::ReadLine->new('ebug');
+  my $attribs = $term->Attribs;
+  $attribs->{completion_function} = sub {
+    my ($text, $line, $start) = @_;
+    my $pad = $ebug->pad || {};
+    return unless $line =~ s/^x //;
+    my @result = grep { /^\Q$line/ } keys %$pad;
+    if ($line =~ /^[\$\@]/) {
+      @result = map { s/^[\$\@]//; $_ } @result;
+    }
+    return @result;
+  };
   my $last_command = "s";
   my $list_always = 0;
   my $list_lines_count = 9;
 
   while (1) {
     if ($ebug->finished) {
-      print "ebug: Program finished, restarting!\n";
-      $ebug->load;
+      print "ebug: Program finished. Enter 'restart' or 'q'\n";
+    } else {
+      if ($list_always) {
+	show_codelines($codelines, $ebug, $list_lines_count) if($list_always);
+      } else {
+	print $ebug->subroutine
+	  . "(" . $ebug->filename . "#" . $ebug->line . "): "
+	  . $ebug->codeline, "\n";
+      }
     }
 
-    if($list_always) {
-      show_codelines($codelines, $ebug, $list_lines_count) if($list_always);
-    } else {
-      print $ebug->subroutine
-	. "(" . $ebug->filename . "#" . $ebug->line . "): "
-	. $ebug->codeline, "\n";
-    }
     my $command = $term->readline("ebug: ");
     $command = "q" if not defined $command;
     $command = $last_command if ($command eq "");
@@ -48,23 +59,25 @@ sub run {
     if ($command eq 'h') {
       print 'Commands:
 
-    b Set break point at a line number (eg: b 6, b code.pl 6, b code.pl 6 $x > 7,
+      b Set break point at a line number (eg: b 6, b code.pl 6, b code.pl 6 $x > 7,
       b Calc::fib)
-    d Delete a break point (d 6, d code.pl 6)
-    e Eval Perl code and print the result (eg: e $x+$y)
-    f Show all the filenames loaded
-    l List codelines or set number of codelines to list (eg: l, l 20)
-    L List codelines always (toggle)
-    n Next (steps over subroutine calls)
-    p Show pad
-    r Run until next break point or watch point
-  ret Return from subroutine  (eg: ret, ret 3.141)
-    s Step (steps into subroutine calls)
-    T Show a stack trace
-    u Undo (eg: u, u 4)
-    w Set a watchpoint (eg: w $t > 10)
-    x Dump a variable using YAML (eg: x $object)
-    q Quit
+      d Delete a break point (d 6, d code.pl 6)
+      e Eval Perl code and print the result (eg: e $x+$y)
+      f Show all the filenames loaded
+      l List codelines or set number of codelines to list (eg: l, l 20)
+      L List codelines always (toggle)
+      n Next (steps over subroutine calls)
+      o Output (show STDOUT, STDERR)
+      p Show pad
+      r Run until next break point or watch point
+    ret Return from subroutine  (eg: ret, ret 3.141)
+restart Restart the program
+      s Step (steps into subroutine calls)
+      T Show a stack trace
+      u Undo (eg: u, u 4)
+      w Set a watchpoint (eg: w $t > 10)
+      x Dump a variable using YAML (eg: x $object)
+      q Quit
 ';
     } elsif ($command eq 'l') {
       show_codelines($codelines, $ebug, $list_lines_count);
@@ -86,8 +99,14 @@ sub run {
       print "$v\n";
     } elsif ($command eq 'n') {
       $ebug->next;
+    } elsif ($command eq 'o') {
+      my($stdout, $stderr) = $ebug->output;
+      print "STDOUT:\n$stdout\n";
+      print "STDERR:\n$stderr\n";
     } elsif ($command eq 'r') {
       $ebug->run;
+    } elsif ($command eq 'restart') {
+      $ebug->load;
     } elsif ($command =~ /^ret ?(.*)/) {
       $ebug->return($1);
     } elsif ($command eq 'T') {

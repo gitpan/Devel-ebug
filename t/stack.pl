@@ -18,6 +18,6 @@ show($k);
 
 sub show {
   my($first, @rest) = @_;
-#  print @what, "\n";
+  print $first, @rest, "\n";
   my $n = 1;
 }

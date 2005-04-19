@@ -1,0 +1,47 @@
+body {
+        margin: 0px;
+        background-color: white;
+        font-family: sans-serif;
+        color: black;
+}
+#body {
+        margin: 10px 240px 0px 10px;
+        padding: 0px;
+}
+#pad {
+        position: absolute;
+        top: 30px;
+        right: 0px;
+        width: 200px;
+
+        padding-right: 10px;
+        padding-bottom: 0px;
+        background-color: #ffffff;
+}
+#version {
+        text-align: center;
+        font-size: small;
+        clear: both;
+
+        margin-top: 10px;
+        padding: 5px 0px 5px 0px;
+        color: #aaaaaa;
+}
+#code {
+  font-family: monospace;
+  background: #eeeedd;
+  border-width: 1px;
+  border-style: solid solid solid solid;
+  border-color: #ccc;
+  padding: 10px 10px 10px 10px;
+}
+#current_line { background: #ffcccc; }
+.line_number { color: #aaaaaa; }
+.comment  { color: #228B22; }
+.symbol  { color: #00688B; }
+.word { color: #8B008B; font-weight:bold; }
+.structure { color: #000000; }
+.number { color: #B452CD; }
+.single  { color: #CD5555;}
+.double  { color: #CD5555;}
+

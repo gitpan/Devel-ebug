@@ -1,148 +1,118 @@
 package Devel::ebug::HTTP;
-use warnings;
 use strict;
+use warnings;
+use Catalyst qw/Static/;
+#use Catalyst qw/-Debug Static/;
+use Catalyst::View::TT;
+use Cwd;
 use Devel::ebug;
-use Class::Accessor::Chained::Fast;
-use HTTP::Server::Simple::CGI;
+use HTML::Prototype;
+use List::Util qw(max);
+use Path::Class;
 use PPI;
 use PPI::HTML;
-use PPI::Lexer;
-use Template;
-use List::Util qw(max);
-use Scalar::Util qw(blessed);
-use base qw(Class::Accessor::Chained::Fast HTTP::Server::Simple::CGI);
-__PACKAGE__->mk_accessors(qw(program ebug cgi vars));
+use Storable qw(dclone);
 
-my $tt = Template->new;
+# globals for now, sigh
+my $codelines_cache;
+our $ebug;
 my $lines_visible_above_count = 10;
+my $root;
 my $sequence = 1;
+my $vars;
 
-=head1 NAME
+BEGIN {
+  my $path = $INC{'Devel/ebug.pm'};
+  if ($path eq 'lib/Devel/ebug.pm') {
+    # we're not installed
+    $root = file($path)->absolute->dir->parent->parent->subdir("root");
+  } else {
+    # we are installed
+    $root = file($path)->dir->subdir("ebug")->subdir("root");
+  }
+  die "Failed to find root at $root!" unless -d $root;
+}
 
-Devel::ebug::HTTP - Webserver front end to Devel::ebug
+Devel::ebug::HTTP->config(
+  name => 'Devel::ebug::HTTP',
+  root => $root,
+);
 
-=head1 SYNOPSIS
+Devel::ebug::HTTP->setup;
 
-  # it's easier to use the 'ebug_httpd' script
-  use Devel::ebug::HTTP;
-  my $server = Devel::ebug::HTTP->new();
-  $server->port(8080);
-  $server->program($filename);
-  $server->run();
+sub default : Private {
+  my($self, $c) = @_;
+  $c->stash->{template} = 'index';
+  $c->forward('handle_request');
+}
 
-=head1 DESCRIPTION
+sub ajax_variable : Regex('^ajax_variable$') {
+  my ($self, $context, $variable) = @_;
+  my $value = $ebug->yaml($variable);
+  $value =~ s{\n}{<br/>}g;
+  my $xml = qq{<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<response>
+  <variable>$variable</variable>
+  <value><![CDATA[$value]]></value>
+</response>
+  };
+  $context->response->content_type("text/xml");
+  $context->response->output($xml);
+}
 
-=head2 Accessors
+sub css : Regex('(?i)\.(?:css)') {
+  my($self, $c) = @_;
+  $c->serve_static("text/css");
+}
 
-In addition to the accessors defined by the
-B<HTTP::Server::Simple::CGI>, the following get/set chanined
-accessors are defined.
+sub js : Regex('(?i)\.(?:js)') {
+   my($self, $c) = @_;
+   $c->serve_static("application/x-javascript");
+}
 
-=over
+sub ico : Regex('(?i)\.(?:ico)') {
+  my($self, $c) = @_;
+  $c->serve_static("image/vnd.microsoft.icon");
+}
 
-=item program
+sub images : Regex('(?i)\.(?:gif|jpg|png)') {
+  my($self, $c) = @_;
+  $c->serve_static;
+}
 
-The name of the program we're running.  When C<run> is called
-an instance of B<Devel::ebug> is created that executes this
-program.
+sub end : Private {
+  my($self, $c) = @_;
+  if ($c->stash->{template}) {
+    $c->response->content_type("text/html");
+    $c->forward('Devel::ebug::HTTP::View::TT');
+  }
+}
 
-=item ebug
+sub handle_request : Private {
+  my($self, $c) = @_;
+  my $params = $c->request->parameters;
 
-The B<Devel::ebug> instance that this front end is displaying.
-
-=back
-
-=head2 Internals
-
-Essentially this module is a B<HTTP::Server::Simple::CGI> subclass.
-The main method is the C<handle_request> method which is called for
-each request to the websever.
-
-=over
-
-=item handle_request
-
-Method that's called each individual request that's made to the server
-from the web browser.  This dispatches to all the other methods.
-
-=cut
-
-sub handle_request {
-  my ($self, $cgi) = @_;
-  my $vars; # goes to the template
-
-  # Save the request for now
-  $self->cgi($cgi);
-  # Clear out template variables
-  $self->vars({});
-
-  # ignore requests that we don't want to handle
-  return if ($self->skip_request());
-
-  # start the ebug process if we need to
-  $self->create_ebug unless ($self->ebug);
+  # clear out template variables
+  $vars = {};
 
   # pass commands we've been passed to the ebug
-  my $action = lc($cgi->param('myaction') || '');
-  $self->tell_ebug($action);
+  my $action = lc($params->{myaction} || '');
+  tell_ebug($c, $action);
 
   # check we're doing things in the right order
-  my $cgi_sequence = $cgi->param('sequence');
+  my $cgi_sequence = $params->{sequence};
   if (defined $cgi_sequence && $cgi_sequence < $sequence) {
-    $self->ebug->undo($sequence - $cgi_sequence);
+    $ebug->undo($sequence - $cgi_sequence);
     $sequence = $cgi_sequence;
   }
   $sequence++;
 
-  # start again if the process has completed
-  if ($self->ebug->finished) {
-    $self->ebug->load;
-  }
-
-  print $self->create_output();
+  set_up_stash($c);
 }
-
-=item skip_request
-
-Returns true if we should skip the current request and return
-a 404.  Currently used for not creating favicons.
-
-=cut
-
-sub skip_request {
-  my ($self) = @_;
-  my $cgi = $self->cgi;
-  my $url = $cgi->self_url;
-
-  # no, we don't have a favourite icon
-  return 1 if $url =~ /favicon.ico/;
-
-  # don't skip it
-  return;
-}
-
-=back
 
 =head2 Interacting with ebug
 
 =over
-
-=item create_ebug
-
-Create a new ebug instance and store it via the C<ebug> accessor.
-
-=cut
-
-sub create_ebug {
-  my ($self) = @_;
-
-  my $ebug = Devel::ebug->new();
-  $ebug->program($self->program);
-  $ebug->load;
-  $self->ebug($ebug);
-
-  return $ebug;
-}
 
 =item tell_ebug($what);
 
@@ -151,21 +121,22 @@ Tell the ebug process what's going on.
 =cut
 
 sub tell_ebug {
-  my ($self, $action) = @_;
-  my $cgi = $self->cgi;
-  my $ebug = $self->ebug;
+  my ($c, $action) = @_;
+  my $params = $c->request->parameters;
 
   if ($action eq 'break point:') {
-    $ebug->break_point($cgi->param('break_point'));
+    $ebug->break_point($params->{'break_point'});
   } elsif ($action eq 'examine') {
-    my $variable = $cgi->param('variable');
-    my $value   = $ebug->eval("use YAML; Dump($variable)") || "";
-    $self->vars->{examine} = {
+    my $variable = $params->{'variable'};
+    my $value   = $ebug->yaml($variable) || "";
+    $vars->{examine} = {
       variable => $variable,
       value    => $value,
     };
   } if ($action eq 'next') {
     $ebug->next;
+  } elsif ($action eq 'restart') {
+    $ebug->load;
   } elsif ($action eq 'return') {
     $ebug->return;
   } elsif ($action eq 'run') {
@@ -177,64 +148,38 @@ sub tell_ebug {
   }
 }
 
-=back
-
-=head2 Creating the HTML/HTTP response
-
-=over
-
-=item create_output
-
-Create everything that's sent to the client.  Calls the other methods
-documented below.
-
-=cut
-
-sub create_output {
-  my($self) = @_;
-
-  # process the template
-  my $html = $self->create_html();
-
-  return $self->header($html)
-         . "\r\n"
-         . $html;
-}
-
-=item create_html
-
-Create the html.
-
-=cut
-
-sub create_html {
-  my($self) = @_;
-  my $cgi  = $self->cgi;
-  my $ebug = $self->ebug;
+sub set_up_stash {
+  my($c) = @_;
+  my $params = $c->request->parameters;
 
   my $break_points;
   $break_points->{$_}++ foreach $ebug->break_points;
 
-  my $url = $cgi->url . "/";
+  my $url = $c->request->base;
 
-  my $vars = {
-    %{$self->vars},
+  my($stdout, $stderr) = $ebug->output;
+
+  my $codelines = codelines($c);
+
+  $vars = {
+    %$vars,
     break_points => $break_points,
-    codelines => $self->codelines,
+    codelines => $codelines,
     ebug => $ebug,
-    self => $self,
     sequence => $sequence,
     stack_trace_human => [$ebug->stack_trace_human],
+    stdout => $stdout,
+    stderr => $stderr,
+    subroutine => $ebug->subroutine,
     top_visible_line => max(1, $ebug->line - $lines_visible_above_count + 1),
     url => $url,
   };
 
-  my $html;
-  my $template = $self->template();
-  $tt->process(\$template, $vars, \$html) || die $tt->error();
-
-  return $html;
+  foreach my $k (keys %$vars) {
+    $c->stash->{$k} = $vars->{$k};
+  }
 }
+
 
 =item codelines
 
@@ -243,13 +188,12 @@ Create the marked up perl code.
 =cut
 
 sub codelines {
-  my($self) = @_;
-  my $ebug = $self->ebug;
+  my($c) = @_;
   my $filename = $ebug->filename;
-  return $self->{codelines_cache}->{$filename} if exists $self->{codelines_cache}->{$filename};
+  return $codelines_cache->{$filename} if exists $codelines_cache->{$filename};
 
-  my $lexer = PPI::Lexer->new;
-  my $document = $lexer->lex_source(join "\n", $self->ebug->codelines);
+  my $code = join "\n", $ebug->codelines;
+  my $document = PPI::Document->new($code);
   my $highlight = PPI::HTML->new(line_numbers => 1);
   my $pretty =  $highlight->html($document);
 
@@ -270,6 +214,15 @@ sub codelines {
     $_;
   } @lines;
 
+  # add the dynamic tooltips
+  my $url = $c->request->base;
+  @lines = map {
+    s{<span class="symbol">(.+?)</span>}{
+      '<span class="symbol" ' . variable_html($url, $1) . "</span>"
+      }eg;
+    $_;
+  } @lines;
+
   # make us slightly more XHTML
   $_ =~ s{<br>}{<br/>} foreach @lines;
 
@@ -279,187 +232,17 @@ sub codelines {
     $_;
   } @lines;
 
-  $self->{codelines_cache}->{$filename} = \@lines;
+  $codelines_cache->{$filename} = \@lines;
   return \@lines;
 }
 
-=item header($html)
-
-Return a string that contains the http header for the html that's
-been passed (including the server status code.)
-
-=cut
-
-sub header {
-  my ($self, $html) = @_;
-
-  return "HTTP/1.0 200 OK\r\n"
-    . "Content-Type: text/html\r\n"
-    . "Content-Cache: No\r\n"
-    . "Content-Length: " . length($html) . "\r\n";
+sub variable_html {
+  my($url, $variable) = @_;
+  return qq{
+<a style="text-decoration: none" href="#" onmouseover="return tooltip('$variable')" onmouseout="return nd();">$variable</a>};
 }
 
-=item template
-
-Return the template toolkit template.
-
-=cut
-
-sub template {
-  return q~
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html>
-<head>
-<style type="text/css">
-body {
-        margin: 0px;
-        background-color: white;
-        font-family: sans-serif;
-        color: black;
-}
-#body {
-        margin: 10px 240px 0px 10px;
-        padding: 0px;
-}
-#pad {
-        position: absolute;
-        top: 30px;
-        right: 0px;
-        width: 200px;
-
-        padding-right: 10px;
-        padding-bottom: 0px;
-        background-color: #ffffff;
-}
-#version {
-        text-align: center;
-        font-size: small;
-        clear: both;
-
-        margin-top: 10px;
-        padding: 5px 0px 5px 0px;
-        color: #aaaaaa;
-}
-#code {
-  font-family: monospace;
-  background: #eeeedd;
-  border-width: 1px;
-  border-style: solid solid solid solid;
-  border-color: #ccc;
-  padding: 10px 10px 10px 10px;
-}
-#current_line { background: #ffcccc; }
-.line_number { color: #aaaaaa; }
-.comment  { color: #228B22; }
-.symbol  { color: #00688B; }
-.word { color: #8B008B; font-weight:bold; }
-.structure { color: #000000; }
-.number { color: #B452CD; }
-.single  { color: #CD5555;}
-.double  { color: #CD5555;}
-
-</style>
-<script type="text/javascript">
-<!--
-window.onload = function() {
-document.onkeypress = register;
-}
-function register(e) {
-    var key;
-    var myaction;
-    if (e == null) {
-        // IE
-        key = event.keyCode
-    }
-    else {
-        // Mozilla
-        if (e.altKey || e.ctrlKey) {
-            return true
-        }
-        key = e.which
-    }
-    letter = String.fromCharCode(key).toLowerCase();
-    switch (letter) {
-        case "n": myaction = "next"; break
-        case "r": myaction = "return"; break
-        case "R": myaction = "run"; break
-        case "s": myaction = "step"; break
-        case "u": myaction = "undo"; break
-    }
-    if (myaction) {
-      document.hiddenform.myaction.value = myaction;
-      document.hiddenform.submit();
-    }
-}
-// -->
-</script>
-[% subroutine = ebug.subroutine | html %]
-<title>[% ebug.program | html %] [% subroutine %]([% ebug.filename | html %]#[% ebug.line %]) [% ebug.codeline | html %]</title>
-</head>
-<body>
-<div id="body">
-<p>
-[% self.program | html %] [% subroutine %]([% ebug.filename | html %]#[% ebug.line %])
-</p>
-<form name="myform" method="post" action="[% url %]#top">
- <input type="hidden" name="sequence" value="[% sequence %]"/>
- <input type="submit" name="myaction" value="Step"/>
- <input type="submit" name="myaction" value="Next"/>
- <input type="submit" name="myaction" value="Return"/>
- <input type="submit" name="myaction" value="Run"/>
- <input type="submit" name="myaction" value="Undo"/>
- <input type="submit" name="myaction" value="Break point:"/>
- <input type="text" name="break_point" value=""/>
-</form>
-
-<div id="code">
-[% FOREACH i IN [1..codelines.size] %]
-[% IF i == top_visible_line %]<a name="top"></a>[% END %]
-[% IF i == ebug.line %]<div id="current_line">[% END -%]
-[% IF break_points.$i %]B[% ELSE %]&nbsp;[% END -%]
-[% codelines.$i %]
-[% IF i == ebug.line %]</div>[% END %]
-[% END %]
-</div>
-</div>
-
-<div id="pad">
-<h3>Variables in [% subroutine %]</h3>
-[% pad = ebug.pad_human %]
-[% FOREACH k IN pad.keys.sort %]
-  <span class="symbol"><a href="[% url %]?sequence=[% sequence %]&amp;variable=[% k %]&amp;myaction=examine#top">[% k | html %]</a></span> = <span class="number">[% pad.$k | html %]</span><br/>
-[% END %]
-
-<h3>Stack trace</h3>
-<small>
-[% FOREACH frame IN stack_trace_human %]
-  [% frame %]<br/>
-[% END %]
-</small>
-
-[% IF examine.variable %]
-<h3>Variable [% examine.variable %]</h3>
-<small>
-[% e = examine.value.replace('\n','<br/>'); e %]
-</small>
-[% END %]
-
-</div>
-
-<div id="version">
-<a href="http://search.cpan.org/dist/Devel-ebug/">Devel::ebug</a> [% ebug.VERSION %]
-</div>
-
-<form name="hiddenform" method="post" style="visibility:hidden;" action="[% url %]#top">
- <input type="hidden" name="myaction" value="nothing"/>
- <input type="hidden" name="sequence" value="[% sequence %]"/>
- <input type="submit" name="foo" value="Return"/>
-</form>
-</body>
-</html>
-~;
-}
 
 1;
 
+__END__

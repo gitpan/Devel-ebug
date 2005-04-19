@@ -11,7 +11,7 @@ sub undo {
   my $response = $self->talk({ command => "commands" });
   my @commands = @{$response->{commands}};
   pop @commands foreach 1..$levels;
-
+#  use YAML; warn Dump \@commands;
   my $proc = $self->proc;
   $proc->die;
   $self->load;

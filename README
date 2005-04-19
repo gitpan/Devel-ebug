@@ -15,6 +15,7 @@ SYNOPSIS
       $ebug->step;
       $ebug->step;
       $ebug->next;
+      my($stdout, $stderr) = $ebug->output;
       $ebug->break_point(6);
       $ebug->break_point(6, '$e = 4');
       $ebug->break_point("t/Calc.pm", 29);
@@ -33,6 +34,7 @@ SYNOPSIS
         print "Variable: $k = $v\n";
       }
       my $v = $ebug->eval('2 ** $exp');
+      my $y = $ebug->yaml('$z');
       my @frames = $ebug->stack_trace;
       my @frames2 = $ebug->stack_trace_human;
       $ebug->undo;
@@ -199,6 +201,12 @@ METHODS
 
       $ebug->next;
 
+  output
+    The output method returns any content the program has output to either
+    standard output or standard error:
+
+      my($stdout, $stderr) = $ebug->output;
+
   package
     The package method returns the package of the currently running code:
 
@@ -279,6 +287,12 @@ METHODS
     is true:
 
       $ebug->watch_point('$x > 100');
+
+  yaml
+    The eval method evaluates Perl code in the current program and returns
+    the result of YAML's Dump() method:
+
+      my $y = $ebug->yaml('$z');
 
 SEE ALSO
     perldebguts

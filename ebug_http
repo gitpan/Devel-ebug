@@ -1,48 +1,57 @@
 #!perl
-use warnings;
+BEGIN { $ENV{CATALYST_ENGINE} = 'Server' }
 use strict;
+use FindBin;
 use lib 'lib';
+use Devel::ebug;
 use Devel::ebug::HTTP;
 
-my $filename = shift;
-die "Usage: ebug_http filename\n" unless $filename;
-
-my $server = Devel::ebug::HTTP->new();
 my $port = 8080;
-$server->port($port);
-$server->program($filename);
-$^O =~ /mswin32/i and system("start http://localhost:$port/#top");
-$^O =~ /darwin/i and system("open http://localhost:$port/#top");
-$server->run();
+my $filename = shift;
+die "Usage: ebug_httpng filename\n" unless $filename;
 
+my $ebug = Devel::ebug->new();
+$ebug->program($filename);
+$ebug->load;
+$Devel::ebug::HTTP::ebug = $ebug;
+
+#$^O =~ /mswin32/i and system("start http://localhost:$port/#top");
+#$^O =~ /darwin/i and system("open http://localhost:$port/#top &");
+
+Devel::ebug::HTTP->run($port);
+
+1;
 __END__
 
 =head1 NAME
 
-ebug_http - A simple, extensible web Perl debugger
+server - Catalyst Testserver
 
 =head1 SYNOPSIS
 
-  % ebug_http calc.pl
+server.pl [options]
+
+ Options:
+   -? -help    display this help and exits
+   -p -port    port (defaults to 3000)
+
+ See also:
+   perldoc Catalyst::Manual
+   perldoc Catalyst::Manual::Intro
 
 =head1 DESCRIPTION
 
-ebug is a web-based front end to L<Devel::ebug>. It is a simple Perl
-debugger. When run, it will report back how to contact its front page.
-
-Under Mac OS X and Windows it will open the browser for you.
-
-=head1 SEE ALSO
-
-L<Devel::ebug>
+Run a Catalyst Testserver for this application.
 
 =head1 AUTHOR
 
-Leon Brocard, C<< <acme@astray.com> >>
+Sebastian Riedel, C<sri@oook.de>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2005, Leon Brocard
+Copyright 2004 Sebastian Riedel. All rights reserved.
 
-This program is free software; you can redistribute it or modify it
-under the same terms as Perl itself.
+This library is free software. You can redistribute it and/or modify it under
+the same terms as perl itself.
+
+=cut

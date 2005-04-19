@@ -8,16 +8,11 @@ our @EXPORT = qw(basic);
 sub basic {
   my($self) = @_;
   my $response = $self->talk({ command => "basic" });
-  if (not defined $response) {
-    # it dropped off the end of the program
-    $self->finished(1);
-  } else {
-    $self->finished(0);
-    $self->package ($response->{package });
-    $self->filename($response->{filename});
-    $self->line    ($response->{line    });
-    $self->codeline($response->{codeline});
-  }
+  $self->codeline($response->{codeline});
+  $self->filename($response->{filename});
+  $self->finished($response->{finished});
+  $self->line    ($response->{line    });
+  $self->package ($response->{package });
 }
 
 1;

@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use lib 'lib';
-use Test::More tests => 17;
+use Test::More tests => 21;
 use Devel::ebug;
 
 my $ebug = Devel::ebug->new;
@@ -13,6 +13,15 @@ is($ebug->line, 3);
 is($ebug->subroutine, "main");
 is($ebug->package, "main");
 is($ebug->filename, "t/calc.pl");
+$ebug->step;
+is($ebug->line, 4);
+$ebug->step;
+is($ebug->line, 5);
+$ebug->undo;
+is($ebug->line, 4);
+$ebug->undo;
+is($ebug->line, 3);
+
 $ebug->break_point(6);
 $ebug->break_point(12);
 $ebug->break_point(9);

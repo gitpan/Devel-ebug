@@ -4,8 +4,12 @@ use warnings;
   
 
 sub register_commands {
-  return ( eval => { sub => \&DB::eval, record => 0 } )
+  return (
+    eval => { sub => \&DB::eval, record => 1 },
+    yaml => { sub => \&DB::yaml },
+  );
 }
+
 
 package DB;
 
@@ -21,6 +25,19 @@ sub eval {
     return { eval => $@ };
   } else {
     return { eval => $v };
+  }
+}
+
+sub yaml {
+  my($req, $context) = @_;
+  my $eval = $req->{yaml};
+  local $SIG{__WARN__} = sub {};
+
+  my $v = eval "package $context->{package}; use YAML; Dump($eval)";
+  if ($@) {
+    return { yaml => $@ };
+  } else {
+    return { yaml => $v };
   }
 }
 

@@ -6,7 +6,7 @@ use String::Koremutake;
 use YAML;
 use Module::Pluggable search_path => 'Devel::ebug::Backend::Plugin', require => 1;
 
-our $VERSION = "0.38";
+our $VERSION = "0.39";
 
 use vars qw(@dbline %dbline);
 
@@ -16,12 +16,11 @@ $SIG{INT} = sub {
   return;
 };
 
-
-
 my $context = {
+  finished => 0,
+  initialise => 1,
   mode => "step",
   stack => [],
-  initialise => 1,
   watch_points => [],
 };
 
@@ -205,6 +204,19 @@ sub break_point_condition {
   return $dbline{$line};
 }
 
+sub END {
+  $context->{finished} = 1;
+  $DB::single = 1;
+  DB::fake::at_exit();
+}
+
+package DB::fake;
+
+sub at_exit {
+  1;
+}
+
+package DB;    # Do not trace this 1; below!
 
 1;
 

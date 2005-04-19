@@ -9,10 +9,11 @@ sub register_commands {
 sub basic {
   my($req, $context) = @_;
   return {
-    package  => $context->{package},
-    filename => $context->{filename},
-    line     => $context->{line},
     codeline => $context->{codeline},
+    filename => $context->{filename},
+    finished => $context->{finished},
+    line     => $context->{line},
+    package  => $context->{package},
   }
 }
 
