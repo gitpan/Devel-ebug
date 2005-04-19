@@ -4,7 +4,7 @@ use Devel::ebug::Build;
 
 my $requires = {
   'Carp'                 => '0',
-  'Catalyst'             => '5.02',
+  'Catalyst'             => '5.03',
   'Catalyst::Plugin::Static' => '0.07',
   'Catalyst::View::TT'    => '0.11',
   'Class::Accessor::Chained::Fast' => '0',

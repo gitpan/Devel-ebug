@@ -21,9 +21,6 @@ $Devel::ebug::HTTP::ebug = $ebug;
 #$^O =~ /mswin32/i and system("start http://localhost:$port/#top");
 #$^O =~ /darwin/i and system("open http://localhost:$port/#top &");
 
-print "You can connect to your server at --> http://localhost:$port/ <--\n";
-print "Ignore line below (temporary bug in Catalyst)\n";
-
 Devel::ebug::HTTP->run($port);
 
 1;

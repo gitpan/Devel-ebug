@@ -218,7 +218,7 @@ sub codelines {
   my $url = $c->request->base;
   @lines = map {
     s{<span class="symbol">(.+?)</span>}{
-      '<span class="symbol" ' . variable_html($url, $1) . "</span>"
+      '<span class="symbol">' . variable_html($url, $1) . "</span>"
       }eg;
     $_;
   } @lines;
@@ -238,8 +238,7 @@ sub codelines {
 
 sub variable_html {
   my($url, $variable) = @_;
-  return qq{
-<a style="text-decoration: none" href="#" onmouseover="return tooltip('$variable')" onmouseout="return nd();">$variable</a>};
+  return qq{<a href="#" style="text-decoration: none" onmouseover="return tooltip('$variable')" onmouseout="return nd();">$variable</a>};
 }
 
 
