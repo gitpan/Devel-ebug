@@ -17,26 +17,26 @@ use Storable qw(dclone);
 my $codelines_cache;
 our $ebug;
 my $lines_visible_above_count = 10;
-my $root;
 my $sequence = 1;
 my $vars;
 
-BEGIN {
-  my $path = $INC{'Devel/ebug.pm'};
-  if ($path eq 'lib/Devel/ebug.pm') {
-    # we're not installed
-    $root = file($path)->absolute->dir->parent->parent->subdir("root");
-  } else {
-    # we are installed
-    $root = file($path)->dir->subdir("ebug")->subdir("root");
-  }
-  die "Failed to find root at $root!" unless -d $root;
-}
 
 Devel::ebug::HTTP->config(
   name => 'Devel::ebug::HTTP',
-  root => $root,
 );
+
+# Catalyst has new template bundling code, but the following is
+# necessary for now as our distribution is Devel::ebug but the
+# application is Devel::ebug::HTTP (sigh)
+my $root = Devel::ebug::HTTP->config->{root};
+unless (-d $root) {
+  my $home = Devel::ebug::HTTP->config->{home};
+  $home = dir($home)->parent;
+  Devel::ebug::HTTP->config(
+    home => $home,
+    root => dir($home)->subdir('root'),
+  );
+}
 
 Devel::ebug::HTTP->setup;
 
@@ -48,7 +48,10 @@ sub default : Private {
 
 sub ajax_variable : Regex('^ajax_variable$') {
   my ($self, $context, $variable) = @_;
+  $variable = '\\' . $variable if $variable =~ /^[%@]/;
   my $value = $ebug->yaml($variable);
+  $value =~ s/^--- // unless $variable =~ /^[%@]/;
+  $value = "Not defined" if $value =~ /^Global symbol/;
   $value =~ s{\n}{<br/>}g;
   my $xml = qq{<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <response>
@@ -126,13 +129,6 @@ sub tell_ebug {
 
   if ($action eq 'break point:') {
     $ebug->break_point($params->{'break_point'});
-  } elsif ($action eq 'examine') {
-    my $variable = $params->{'variable'};
-    my $value   = $ebug->yaml($variable) || "";
-    $vars->{examine} = {
-      variable => $variable,
-      value    => $value,
-    };
   } if ($action eq 'next') {
     $ebug->next;
   } elsif ($action eq 'restart') {

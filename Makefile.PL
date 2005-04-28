@@ -2,5 +2,5 @@
     use Module::Build::Compat 0.02;
     use lib '_build/lib';
     Module::Build::Compat->run_build_pl(args => \@ARGV);
-    require Devel::ebug::Build;
-    Module::Build::Compat->write_makefile(build_class => 'Devel::ebug::Build');
+    require Catalyst::Build;
+    Module::Build::Compat->write_makefile(build_class => 'Catalyst::Build');

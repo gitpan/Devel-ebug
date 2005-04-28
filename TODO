@@ -4,9 +4,14 @@ Add more Ajax to ebug_http
 Add more features to ebug_http
 Allow debugging of regexes
 Better error message for when server goes away (storable)
+Better action point setting in ebug_http
 Command line arguments
+Devel::ebug::build missing?
+Document keyboard shortcuts
+Document that it does not quite work under 5.8.0
 Edit program in place while still debugging using Module::Refresh
 Emacs Devel::ebug mode
+Eval in ebug_http
 Forks: when the program being debugged forks, follow the child in ebug_http
 Forks: when the program being debugged forks, open a new window in ebug_http
 If you mouseover a variable declaration, every use of that variable is highlighted - Alias
@@ -17,6 +22,7 @@ Make break_point_subroutine take a condition
 Merge watch points and break points
 Online documentation for TODO (tutorial?)
 Optimise ebug (make timing graphs and see if we can add pipelining)
+Option to show only 25 lines of context in ebug_http
 PPI failures with weird characters - cope
 Return list/listrefs and hash/hashrefs depending on context
 Smart::Comments for debugging
@@ -26,6 +32,7 @@ Test ebug more
 Test ebug_http
 Test minicpan
 Test with bigger examples
+Tooltip scalars should only be YAMLd if they're refs
 Tidy up code
 Use Class::ISA to show inheritance
 

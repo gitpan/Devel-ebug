@@ -1,7 +1,7 @@
 #!perl
 BEGIN { 
     $ENV{CATALYST_ENGINE} = 'HTTP';
-    $ENV{CATALYST_SCRIPT_GEN} = 2;
+    $ENV{CATALYST_SCRIPT_GEN} = 3;
 }  
 use strict;
 use FindBin;
@@ -11,7 +11,7 @@ use Devel::ebug::HTTP;
 
 my $port = 8080;
 my $filename = shift;
-die "Usage: ebug_httpng filename\n" unless $filename;
+die "Usage: ebug_http filename\n" unless $filename;
 
 my $ebug = Devel::ebug->new();
 $ebug->program($filename);

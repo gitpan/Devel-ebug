@@ -1,10 +1,11 @@
 use strict;
 use lib 'lib';
-use Devel::ebug::Build;
+use lib '../lib';
+use Catalyst::Build;
 
 my $requires = {
   'Carp'                 => '0',
-  'Catalyst'             => '5.03',
+  'Catalyst'             => '5.10',
   'Catalyst::Plugin::Static' => '0.07',
   'Catalyst::View::TT'    => '0.11',
   'Class::Accessor::Chained::Fast' => '0',
@@ -37,7 +38,7 @@ if ($^O !~ /mswin32/i) {
   $requires->{'Test::Expect'} = '0';
 }
 
-my $build = Devel::ebug::Build->new(
+my $build = Catalyst::Build->new(
   create_makefile_pl => 'small',
   license            => 'perl',
   module_name        => 'Devel::ebug',

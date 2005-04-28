@@ -6,7 +6,7 @@ use String::Koremutake;
 use YAML;
 use Module::Pluggable search_path => 'Devel::ebug::Backend::Plugin', require => 1;
 
-our $VERSION = "0.41";
+our $VERSION = "0.42";
 
 use vars qw(@dbline %dbline);
 
@@ -192,6 +192,11 @@ sub fetch_codelines {
   @codelines = map { $_ =~ s/\s+$//; $_ } @codelines;
   # we run it with -d:ebug::Backend, so remove this extra line
   @codelines = grep  { $_ ne 'use Devel::ebug::Backend;' } @codelines;
+
+  # for some reasons, the perl internals leave the opening POD line
+  # around but strip the rest. so let's strip the opening POD line
+  @codelines = map { $_ =~ /^=(head|over|item|back|over|cut|pod|begin|end|for)/ ? "" : $_ } @codelines;
+
   if (@lines) {
     @codelines = @codelines[@lines];
   }

@@ -62,6 +62,7 @@ t/koremutake.t
 t/oo.t
 t/output.t
 t/pad.t
+t/pod.pl
 t/pod.t
 t/return.t
 t/signal.pl

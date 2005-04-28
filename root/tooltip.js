@@ -10,7 +10,7 @@ function tooltip (variable) {
         response  = request.responseXML.documentElement;
         variable = response.getElementsByTagName('variable')[0].firstChild.data;
       value = response.getElementsByTagName('value')[0].firstChild.data;
-      return overlib(value, FOLLOWMOUSE, WRAP);
+      return overlib('<div style="font-family: \'monospace\'">' + value + '</div>', FOLLOWMOUSE, WRAP);
       return true;
     }
   });

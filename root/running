@@ -40,13 +40,6 @@
 [% END %]
 </small>
 
-[% IF examine.variable %]
-<h3>Variable [% examine.variable %]</h3>
-<small>
-[% e = examine.value.replace('\n','<br/>'); e %]
-</small>
-[% END %]
-
 <h3>STDOUT</h3>
 <small>[% stdout | html | replace('\n','<br/>') %]</small>
 

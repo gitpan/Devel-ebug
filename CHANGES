@@ -1,5 +1,20 @@
 Revision history for Perl module Devel::ebug
 
+0.42 Thu Apr 28 17:42:00 BST 2005
+     - fix ebug_http error message
+     - fix bug in ebug_http where the pretty printing was getting
+       confused if the debugged program had inline POD (spotted by
+       sri)
+     - HTML tooltips are now in monospace, have a sensible "Not
+       defined" error message, and show lists or hashes depending on
+       the type. Scalars no longer have a --- prefix
+     - fixed a bug with a missing 'Devel::ebug::Build' (spotted by
+       obra)
+     - use Catalyst 5.10 and its new template bundling (completely
+       obsoleting the above change)
+     - removed obsolete "examine" code from Devel::ebug::HTTP and
+       template
+
 0.41 Tue Apr 19 21:04:18 BST 2005
      - remove "work around" as it is fixed in Catalyst 5.03
      - fix small HTML bug (spotted by LTjake)

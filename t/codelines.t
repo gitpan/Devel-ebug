@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use lib 'lib';
-use Test::More tests => 5;
+use Test::More tests => 11;
 use Devel::ebug;
 
 my $ebug = Devel::ebug->new;
@@ -56,3 +56,12 @@ is_deeply(\@codelines, [
 @codelines = $ebug->codelines("t/Calc.pm");
 is(scalar(@codelines), 34);
 
+$ebug->program("t/pod.pl");
+$ebug->load;
+@codelines = $ebug->codelines();
+is($codelines[0], '#!perl');
+is($codelines[8], 'print "Result is $zz!\n";');
+is($codelines[9], '');
+is($codelines[10], '');
+is($codelines[11], '');
+is($codelines[31], 'sub add {');
