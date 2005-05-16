@@ -1,9 +1,13 @@
 window.onload = function() {
 document.onkeypress = register;
 }
+keys_disabled = 0;
 function register(e) {
     var key;
     var myaction;
+    if (keys_disabled) {
+      return true;
+    }
     if (e == null) {
         // IE
         key = event.keyCode

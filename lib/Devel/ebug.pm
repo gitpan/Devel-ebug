@@ -14,7 +14,7 @@ use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
 program socket proc
 package filename line codeline finished));
-our $VERSION = "0.42";
+our $VERSION = "0.43";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -56,7 +56,7 @@ sub load {
   }
   die "Could not connect: $!" unless $socket;
   $self->socket($socket);
-
+ 
   my $response = $self->talk({
     command => "ping",
     version => $VERSION,
@@ -436,6 +436,12 @@ the result of YAML's Dump() method:
 =head1 SEE ALSO
 
 L<perldebguts>
+
+=head1 BUGS
+
+Devel::ebug does not quite work under 5.8.0.
+
+Devel::ebug does not handle signals under Windows.
 
 =head1 AUTHOR
 

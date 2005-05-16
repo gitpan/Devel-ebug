@@ -2,8 +2,11 @@
 use strict;
 use warnings;
 use lib 'lib';
-use Test::More tests => 8;
 use Devel::ebug;
+use Test::More;
+
+plan skip_all => "Devel::ebug does not handle signals under Windows atm" if $^O =~ /mswin32/i;
+plan tests => 8;
 
 my $ebug = Devel::ebug->new;
 $ebug->program("t/signal.pl");

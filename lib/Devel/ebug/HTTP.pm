@@ -32,9 +32,13 @@ my $root = Devel::ebug::HTTP->config->{root};
 unless (-d $root) {
   my $home = Devel::ebug::HTTP->config->{home};
   $home = dir($home)->parent;
+  $root = dir($home)->subdir('root');
+  unless (-d $root) {
+    $root = dir($home)->parent->parent->parent->subdir('root');
+  }
   Devel::ebug::HTTP->config(
     home => $home,
-    root => dir($home)->subdir('root'),
+    root => $root,
   );
 }
 
@@ -63,23 +67,36 @@ sub ajax_variable : Regex('^ajax_variable$') {
   $context->response->output($xml);
 }
 
+sub ajax_eval : Regex('^ajax_eval$') {
+  my ($self, $context) = @_;
+  my $eval = $context->request->parameters->{eval};
+  my $result = $ebug->eval($eval) || "No output";
+  $result =~ s/ at \(eval .+$//;
+  $context->response->content_type("text/html");
+  $context->response->output($result);
+}
+
 sub css : Regex('(?i)\.(?:css)') {
   my($self, $c) = @_;
+  $c->res->headers->header('Cache-Control' => 'max-age=60');
   $c->serve_static("text/css");
 }
 
 sub js : Regex('(?i)\.(?:js)') {
    my($self, $c) = @_;
+   $c->res->headers->header('Cache-Control' => 'max-age=60');
    $c->serve_static("application/x-javascript");
 }
 
 sub ico : Regex('(?i)\.(?:ico)') {
   my($self, $c) = @_;
+  $c->res->headers->header('Cache-Control' => 'max-age=60');
   $c->serve_static("image/vnd.microsoft.icon");
 }
 
 sub images : Regex('(?i)\.(?:gif|jpg|png)') {
   my($self, $c) = @_;
+  $c->res->headers->header('Cache-Control' => 'max-age=60');
   $c->serve_static;
 }
 
@@ -126,9 +143,19 @@ Tell the ebug process what's going on.
 sub tell_ebug {
   my ($c, $action) = @_;
   my $params = $c->request->parameters;
+  
+  if ($ebug->finished &&
+     ($action ne "restart") &&
+     ($action ne "undo")) {
+     return;
+  }
 
   if ($action eq 'break point:') {
     $ebug->break_point($params->{'break_point'});
+  } elsif ($action eq 'break_point') {
+    $ebug->break_point($params->{line});
+  } elsif ($action eq 'break_point_delete') {
+    $ebug->break_point_delete($params->{line});
   } if ($action eq 'next') {
     $ebug->next;
   } elsif ($action eq 'restart') {
@@ -188,6 +215,7 @@ sub codelines {
   my $filename = $ebug->filename;
   return $codelines_cache->{$filename} if exists $codelines_cache->{$filename};
 
+  my $url = $c->request->base;
   my $code = join "\n", $ebug->codelines;
   my $document = PPI::Document->new($code);
   my $highlight = PPI::HTML->new(line_numbers => 1);
@@ -204,14 +232,15 @@ sub codelines {
   # right-justify the line number
   @lines = map {
     s{<span class="line_number">(\d+):}{
+      my $line = $1;
       my $size = 4 - (length($1));
       $size = 0 if $size < 0;
-      '<span class="line_number">' . ("&nbsp;" x $size) . "$1:"}e;
+      $line = line_html($url, $line);
+      '<span class="line_number">' . ("&nbsp;" x $size) . "$line:"}e;
     $_;
   } @lines;
 
   # add the dynamic tooltips
-  my $url = $c->request->base;
   @lines = map {
     s{<span class="symbol">(.+?)</span>}{
       '<span class="symbol">' . variable_html($url, $1) . "</span>"
@@ -237,6 +266,10 @@ sub variable_html {
   return qq{<a href="#" style="text-decoration: none" onmouseover="return tooltip('$variable')" onmouseout="return nd();">$variable</a>};
 }
 
+sub line_html {
+	my($url, $line) = @_;
+	return qq{<a href="#" style="text-decoration: none" onClick="return break_point($line)">$line</a>};
+}
 
 1;
 

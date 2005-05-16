@@ -1,15 +1,18 @@
-[% page_title = ebug.program _ " " _  subroutine _ "(" _ ebug.filename _ "#" _ ebug.line _ ") " _ ebug.codeline %]
+[% page_title = ebug.program _ " finished!" %]
 
 [% INCLUDE layout_head %]
 
 <div id="body">
-<p><b>[% ebug.program %] finished!</b></p>
 <form name="myform" method="post" action="[% url %]#top">
- <input type="hidden" name="sequence" value="[% sequence %]"/>
- <input type="submit" name="myaction" value="Restart"/>
- <input type="submit" name="myaction" value="Undo"/>
+<input type="hidden" name="sequence" value="[% sequence %]"/>
+<table id="icon_bar" width="100%">
+<tr>
+[% INCLUDE icon image="stock_undo.png" text="Undo" %]
+[% INCLUDE icon image="stock_first.png" text="Restart" %]
+<td width="100%">[% ebug.program | html %] finished!</td>
+</tr>
+</table>
 </form>
-</div>
 
 <div id="pad">
 <h3>STDOUT</h3>

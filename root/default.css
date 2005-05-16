@@ -4,6 +4,10 @@ body {
         font-family: sans-serif;
         color: black;
 }
+form {
+  margin: 0;
+  padding: 0;
+}
 #body {
         margin: 10px 240px 0px 10px;
         padding: 0px;
@@ -35,7 +39,18 @@ body {
   border-color: #ccc;
   padding: 10px 10px 10px 10px;
 }
-#current_line { background: #ffcccc; }
+#eval {
+  font-family: monospace;
+  background: #ddeeee;
+  border-width: 1px;
+  border-style: solid solid solid solid;
+  border-color: #ccc;
+  padding: 5px 5px 5px 5px;
+}
+#icon_bar { background: #ffca7e }
+#icon_graphic { text-align: center }
+#icon_text { text-align: center; font-size: small; }
+#current_line { background: #ffca7e; }
 .line_number { color: #aaaaaa; }
 .comment  { color: #228B22; }
 .symbol  { color: #00688B; }

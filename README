@@ -297,6 +297,11 @@ METHODS
 SEE ALSO
     perldebguts
 
+BUGS
+    Devel::ebug does not quite work under 5.8.0.
+
+    Devel::ebug does not handle signals under Windows.
+
 AUTHOR
     Leon Brocard, "<acme@astray.com>"
 

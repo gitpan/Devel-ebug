@@ -1,5 +1,21 @@
 Revision history for Perl module Devel::ebug
 
+0.43 Mon May 16 18:55:37 BST 2005
+     - document that we don't quite work under 5.8.0 (thanks Simon)
+     - Devel::ebug does not handle signals under Windows atm, so skip
+       the tests for now (spotted by LTjake)
+     - updated to Prototype 1.2.0
+     - try and find our templates a little harder
+     - you can set set break points in ebug_http by clicking on a line
+       number (and delete them by clickling on the little stop sign icon)
+     - you can now evaluate Perl expressions in the web interface
+     - major attempt to make the web interface prettier (icons!)
+     - make some attempt at caching static files
+     - interactive evaluation is now the default in ebug(1) (patch by
+       Jesse Vincent)
+     - ebug(1) now ships with an interactive console mode (patch by 
+       Jesse Vincent)
+
 0.42 Thu Apr 28 17:42:00 BST 2005
      - fix ebug_http error message
      - fix bug in ebug_http where the pretty printing was getting

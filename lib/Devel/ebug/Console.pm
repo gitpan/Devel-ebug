@@ -13,7 +13,10 @@ sub run {
   my $self = shift;
 
   my $filename = join "", @ARGV;
-  croak("Devel::ebug::Console: No filename passed in run()") unless $filename;
+
+  unless ($filename) {
+    $filename = '-e "Interactive ebugging shell"';
+  }
 
   my $ebug = Devel::ebug->new;
   $ebug->program($filename);
@@ -47,7 +50,7 @@ sub run {
 	show_codelines($codelines, $ebug, $list_lines_count) if($list_always);
       } else {
 	print $ebug->subroutine
-	  . "(" . $ebug->filename . "#" . $ebug->line . "): "
+	  . "(" . $ebug->filename . "#" . $ebug->line . "):\n"
 	  . $ebug->codeline, "\n";
       }
     }
@@ -56,7 +59,7 @@ sub run {
     $command = "q" if not defined $command;
     $command = $last_command if ($command eq "");
 
-    if ($command eq 'h') {
+    if ($command =~ /[?h]/) {
       print 'Commands:
 
       b Set break point at a line number (eg: b 6, b code.pl 6, b code.pl 6 $x > 7,
@@ -94,9 +97,6 @@ restart Restart the program
       }
     } elsif ($command eq 's') {
       $ebug->step;
-    } elsif ($command =~ /^e (.+)/) {
-      my $v = $ebug->eval($1) || "";
-      print "$v\n";
     } elsif ($command eq 'n') {
       $ebug->next;
     } elsif ($command eq 'o') {
@@ -137,8 +137,13 @@ restart Restart the program
     } elsif ($command =~ /^x (.+)/) {
       my $v = $ebug->eval("use YAML; Dump($1)") || "";
       print "$v\n";
-    } else {
-      print "Unknown ebug command '$command'!\n";
+    } elsif ($command =~ /^e (.+)/) {
+      my $v = $ebug->eval($1) || "";
+      print "$v\n";
+    } elsif ($command) {
+      my $v = $ebug->eval($command) || "";
+      print "$v\n";
+
     }
     $last_command = $command;
   }
