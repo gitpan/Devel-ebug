@@ -24,7 +24,6 @@ Option to show only 25 lines of context in ebug_http
 PPI failures with weird characters - cope
 Return list/listrefs and hash/hashrefs depending on context
 Smart::Comments for debugging
-Steal some pretty graphics / favicon / logo for ebug_http
 Test coverage
 Test ebug more
 Test ebug_http

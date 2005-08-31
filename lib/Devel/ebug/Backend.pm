@@ -4,9 +4,10 @@ use warnings;
 use IO::Socket::INET;
 use String::Koremutake;
 use YAML;
-use Module::Pluggable search_path => 'Devel::ebug::Backend::Plugin', require => 1;
-
-our $VERSION = "0.43";
+use Module::Pluggable
+  search_path => 'Devel::ebug::Backend::Plugin',
+  require     => 1;
+our $VERSION = "0.44";
 
 use vars qw(@dbline %dbline);
 
@@ -17,21 +18,22 @@ $SIG{INT} = sub {
 };
 
 my $context = {
-  finished => 0,
-  initialise => 1,
-  mode => "step",
-  stack => [],
+  finished     => 0,
+  initialise   => 1,
+  mode         => "step",
+  stack        => [],
   watch_points => [],
 };
 
 # Commands that the back end can respond to
 # Set record if the command changes start and should thus be recorded
 # in order for undo to work properly
-my %commands = ( );
+my %commands = ();
 
 sub DB {
-  my($package, $filename, $line) = caller;
-  ($context->{package}, $context->{filename}, $context->{line}) = ($package, $filename, $line);
+  my ($package, $filename, $line) = caller;
+  ($context->{package}, $context->{filename}, $context->{line}) =
+    ($package, $filename, $line);
 
   initialise() if $context->{initialise};
 
@@ -40,26 +42,25 @@ sub DB {
     $DB::signal = 0;
   }
 
-
-
   # single step
   my $old_single = $DB::single;
   $DB::single = 1;
 
-  if (@{$context->{watch_points}}) {
+  if (@{ $context->{watch_points} }) {
     my %delete;
-    foreach my $watch_point (@{$context->{watch_points}}) {
-      local $SIG{__WARN__} = sub {};
+    foreach my $watch_point (@{ $context->{watch_points} }) {
+      local $SIG{__WARN__} = sub { };
       my $v = eval "package $package; $watch_point";
       if ($v) {
-    $context->{watch_single} = 1;
-    $delete{$watch_point} = 1;
+        $context->{watch_single} = 1;
+        $delete{$watch_point} = 1;
       }
     }
     if ($context->{watch_single} == 0) {
       return;
     } else {
-      @{$context->{watch_points}} = grep { !$delete{$_} } @{$context->{watch_points}};
+      @{ $context->{watch_points} } =
+        grep { !$delete{$_} } @{ $context->{watch_points} };
     }
   }
 
@@ -67,12 +68,13 @@ sub DB {
   if ($old_single == 0) {
     my $condition = break_point_condition($filename, $line);
     if ($condition) {
-      local $SIG{__WARN__} = sub {};
+      local $SIG{__WARN__} = sub { };
       my $v = eval "package $package; $condition";
       unless ($v) {
-    # condition not true, go back to running
-    $DB::single = 0;
-    return;
+
+        # condition not true, go back to running
+        $DB::single = 0;
+        return;
       }
     }
   }
@@ -82,7 +84,7 @@ sub DB {
   chomp $context->{codeline};
 
   while (1) {
-    my $req = get();
+    my $req     = get();
     my $command = $req->{command};
 
     my $sub = $commands{$command}->{sub};
@@ -90,8 +92,8 @@ sub DB {
       put($sub->($req, $context));
 
       if ($context->{last}) {
-	delete $context->{last};
-	last;
+        delete $context->{last};
+        last;
       }
     } else {
       die "unknown command $command";
@@ -99,11 +101,9 @@ sub DB {
   }
 }
 
-
-
 sub initialise {
-  my $k = String::Koremutake->new;
-  my $int = $k->koremutake_to_integer($ENV{SECRET});
+  my $k      = String::Koremutake->new;
+  my $int    = $k->koremutake_to_integer($ENV{SECRET});
   my $port   = 3141 + ($int % 1024);
   my $server = IO::Socket::INET->new(
     Listen    => 5,
@@ -112,7 +112,8 @@ sub initialise {
     Proto     => 'tcp',
     ReuseAddr => 1,
     Reuse     => 1,
-  ) || die $!;
+    )
+    || die $!;
   $context->{socket} = $server->accept;
 
   foreach my $plugin (__PACKAGE__->plugins) {
@@ -123,12 +124,12 @@ sub initialise {
       $commands{$command} = $new{$command};
     }
   }
- 
+
   $context->{initialise} = 0;
 }
 
 sub put {
-  my($res) = @_;
+  my ($res) = @_;
   my $data = unpack("h*", Dump($res));
   $context->{socket}->print($data . "\n");
 }
@@ -137,37 +138,38 @@ sub get {
   exit unless $context->{socket};
   my $data = $context->{socket}->getline;
   my $req = Load(pack("h*", $data));
-  push @{$context->{history}}, $req if exists $commands{$req->{command}}->{record};
+  push @{ $context->{history} }, $req
+    if exists $commands{ $req->{command} }->{record};
   return $req;
 }
 
-
 sub sub {
-  my(@args) = @_;
+  my (@args) = @_;
   my $sub = $DB::sub;
-
-  my $frame = {
-    single     => $DB::single,
-  };
-  push @{$context->{stack}}, $frame;
+  
+  my $frame = { single => $DB::single, sub => $sub };
+  push @{ $context->{stack} }, $frame;
 
   $DB::single = 0 if defined $context->{mode} && $context->{mode} eq 'next';
 
   no strict 'refs';
   if (wantarray) {
-    my @ret = &$sub;
-    my $frame = pop @{$context->{stack}};
+    my @ret   = &$sub;
+    my $frame = pop @{ $context->{stack} };
     $DB::single = $frame->{single};
+    $DB::single = 0 if defined $context->{mode} && $context->{mode} eq 'run' && !@{$context->{watch_points}};
 
     if ($frame->{return}) {
-      return @{$frame->{return}};
+      return @{ $frame->{return} };
     } else {
       return @ret;
     }
   } else {
-    my $ret = &$sub;
-    my $frame = pop @{$context->{stack}};
+    my $ret   = &$sub;
+    my $frame = pop @{ $context->{stack} };
     $DB::single = $frame->{single};
+    $DB::single = 0 if defined $context->{mode} && $context->{mode} eq 'run' && !@{$context->{watch_points}};
+    
     if ($frame->{return}) {
       return $frame->{return}->[0];
     } else {
@@ -176,9 +178,9 @@ sub sub {
   }
 }
 
-
 sub fetch_codelines {
   my ($filename, @lines) = @_;
+
   #use vars qw(@dbline %dbline);
   *dbline = $main::{ '_<' . $filename };
   my @codelines = @dbline;
@@ -187,15 +189,19 @@ sub fetch_codelines {
   shift @codelines if not defined $codelines[0];
 
   # defined!
-  @codelines = map  { defined($_) ? $_ : ""  } @codelines;
+  @codelines = map { defined($_) ? $_ : "" } @codelines;
+
   # remove newlines
   @codelines = map { $_ =~ s/\s+$//; $_ } @codelines;
+
   # we run it with -d:ebug::Backend, so remove this extra line
-  @codelines = grep  { $_ ne 'use Devel::ebug::Backend;' } @codelines;
+  @codelines = grep { $_ ne 'use Devel::ebug::Backend;' } @codelines;
 
   # for some reasons, the perl internals leave the opening POD line
   # around but strip the rest. so let's strip the opening POD line
-  @codelines = map { $_ =~ /^=(head|over|item|back|over|cut|pod|begin|end|for)/ ? "" : $_ } @codelines;
+  @codelines =
+    map { $_ =~ /^=(head|over|item|back|over|cut|pod|begin|end|for)/ ? "" : $_ }
+    @codelines;
 
   if (@lines) {
     @codelines = @codelines[@lines];
@@ -204,7 +210,7 @@ sub fetch_codelines {
 }
 
 sub break_point_condition {
-  my($filename, $line) = @_;
+  my ($filename, $line) = @_;
   *dbline = $main::{ '_<' . $filename };
   return $dbline{$line};
 }
@@ -224,5 +230,4 @@ sub at_exit {
 package DB;    # Do not trace this 1; below!
 
 1;
-
 

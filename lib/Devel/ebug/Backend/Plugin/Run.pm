@@ -27,9 +27,8 @@ sub return {
   if ($req->{values}) {
     $context->{stack}->[0]->{return} = $req->{values};
   }
-  $context->{mode} = "run"; # run until returned from subroutine
+  $context->{mode} = "return"; # run until returned from subroutine
   $DB::single = 0; # run
-
   if ($context->{stack}->[-1]) {
     $context->{stack}->[-1]->{single} = 1; # single step higher up
   }
@@ -54,6 +53,7 @@ sub run {
 
 sub step {
   my($req, $context) = @_;
+  $DB::single = 1;           # single step
   $context->{mode} = "step"; # single step (into subroutines)
   $context->{last} = 1;      # and out of the loop, onto the next command
   return {};

@@ -217,7 +217,7 @@ sub codelines {
 
   my $url = $c->request->base;
   my $code = join "\n", $ebug->codelines;
-  my $document = PPI::Document->new($code);
+  my $document = PPI::Document->new(\$code);
   my $highlight = PPI::HTML->new(line_numbers => 1);
   my $pretty =  $highlight->html($document);
 
@@ -231,7 +231,7 @@ sub codelines {
 
   # right-justify the line number
   @lines = map {
-    s{<span class="line_number">(\d+):}{
+    s{<span class="line_number"> ?(\d+) ?:}{
       my $line = $1;
       my $size = 4 - (length($1));
       $size = 0 if $size < 0;

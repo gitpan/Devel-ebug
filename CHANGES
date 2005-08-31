@@ -1,5 +1,11 @@
 Revision history for Perl module Devel::ebug
 
+0.44 Wed Aug 31 16:36:03 BST 2005
+     - require PPI 1.003 (and work with new API)
+     - update ebug_http to new Catalyst (removes warning)
+     - fix bug with "run" stopping after returning back to main::
+     - new run.t
+
 0.43 Mon May 16 18:55:37 BST 2005
      - document that we don't quite work under 5.8.0 (thanks Simon)
      - Devel::ebug does not handle signals under Windows atm, so skip

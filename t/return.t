@@ -15,6 +15,7 @@ is($ebug->line, 9);
 is($ebug->subroutine, 'Calc::add');
 is($ebug->filename, 't/Calc.pm');
 $ebug->return();
+
 is($ebug->pad->{'$r'}, 15);
 is($ebug->line, 9);
 is($ebug->subroutine, 'main');

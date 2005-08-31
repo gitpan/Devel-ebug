@@ -76,6 +76,7 @@ t/pad.t
 t/pod.pl
 t/pod.t
 t/return.t
+t/run.t
 t/signal.pl
 t/signal.t
 t/stack.pl
