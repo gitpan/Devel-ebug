@@ -7,7 +7,7 @@ use YAML;
 use Module::Pluggable
   search_path => 'Devel::ebug::Backend::Plugin',
   require     => 1;
-our $VERSION = "0.44";
+our $VERSION = "0.45";
 
 use vars qw(@dbline %dbline);
 

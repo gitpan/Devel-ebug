@@ -12,9 +12,10 @@ use Module::Pluggable require => 1;
 
 use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
-program socket proc
-package filename line codeline finished));
-our $VERSION = "0.44";
+    program socket proc
+    package filename line codeline subroutine finished));
+
+our $VERSION = "0.45";
 
 # let's run the code under our debugger and connect to the server it
 # starts up

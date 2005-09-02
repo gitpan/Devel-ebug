@@ -1,48 +1,34 @@
 ---
 name: Devel-ebug
-version: 0.44
+version: 0.45
 author:
   - 'Leon Brocard, C<< <acme@astray.com> >>'
 abstract: 'A simple, extensible Perl debugger'
 license: perl
 requires:
   Carp: 0
-  Catalyst: 5.10
-  Catalyst::Plugin::Static: 0.07
-  Catalyst::View::TT: 0.11
   Class::Accessor::Chained::Fast: 0
   Devel::StackTrace: 0
   File::Find: 0
-  HTML::Prototype: 0
-  HTTP::Server::Simple::CGI: 0
   IO::Socket::INET: 0
-  List::Util: 0
   Module::Pluggable: 0
-  PPI: 1.003
-  PPI::HTML: 0
-  PPI::Lexer: 0
   PadWalker: 0
-  Path::Class: 0
   Proc::Background: 0
   Scalar::Util: 0
-  Storable: 0
   String::Koremutake: 0
-  Template: 0
-  Test::Differences: 0
   Test::Expect: 0
   Test::More: 0
-  Test::WWW::Mechanize::Catalyst: 0.31
   YAML: 0.39
 provides:
   DB:
     file: lib/Devel/ebug/Backend/Plugin/Eval.pm
-    version: 0.44
+    version: 0.45
   DB::fake:
     file: lib/Devel/ebug/Backend.pm
-    version: 0.44
+    version: 0.45
   Devel::ebug:
     file: lib/Devel/ebug.pm
-    version: 0.44
+    version: 0.45
   Devel::ebug::Backend::Plugin::ActionPoints:
     file: lib/Devel/ebug/Backend/Plugin/ActionPoints.pm
   Devel::ebug::Backend::Plugin::Basic:
@@ -65,14 +51,8 @@ provides:
     file: lib/Devel/ebug/Backend/Plugin/Run.pm
   Devel::ebug::Backend::Plugin::StackTrace:
     file: lib/Devel/ebug/Backend/Plugin/StackTrace.pm
-  Devel::ebug::Backend::Plugin::Subroutine:
-    file: lib/Devel/ebug/Backend/Plugin/Subroutine.pm
   Devel::ebug::Console:
     file: lib/Devel/ebug/Console.pm
-  Devel::ebug::HTTP:
-    file: lib/Devel/ebug/HTTP.pm
-  Devel::ebug::HTTP::View::TT:
-    file: lib/Devel/ebug/HTTP/View/TT.pm
   Devel::ebug::Plugin::ActionPoints:
     file: lib/Devel/ebug/Plugin/ActionPoints.pm
   Devel::ebug::Plugin::Basic:
@@ -91,9 +71,7 @@ provides:
     file: lib/Devel/ebug/Plugin/Run.pm
   Devel::ebug::Plugin::StackTrace:
     file: lib/Devel/ebug/Plugin/StackTrace.pm
-  Devel::ebug::Plugin::Subroutine:
-    file: lib/Devel/ebug/Plugin/Subroutine.pm
   filename:
     file: lib/Devel/ebug.pm
-    version: 0.44
+    version: 0.45
 generated_by: Module::Build version 0.2611

@@ -1,5 +1,9 @@
 Revision history for Perl module Devel::ebug
 
+0.45 Fri Sep  2 15:01:42 BST 2005
+     - moved subroutine into basic information
+     - moved ebug_http into its own distribution (patch by Jesse Vincent)
+
 0.44 Wed Aug 31 16:36:03 BST 2005
      - require PPI 1.003 (and work with new API)
      - update ebug_http to new Catalyst (removes warning)
