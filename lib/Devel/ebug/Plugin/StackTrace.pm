@@ -9,7 +9,7 @@ our @EXPORT = qw(stack_trace stack_trace_human stack_trace_human_args);
 sub stack_trace {
   my($self) = @_;
   my $response = $self->talk({ command => "stack_trace" });
-  return @{$response->{stack_trace}};
+  return @{$response->{stack_trace}||[]};
 }
 
 # return the stack trace in a human-readable format

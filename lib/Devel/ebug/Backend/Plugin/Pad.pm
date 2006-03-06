@@ -9,6 +9,7 @@ sub register_commands {
 
 package DB;
 
+use Scalar::Util qw(blessed reftype);
 sub pad {
   my($req, $context) = @_;
   my $pad;
@@ -20,6 +21,9 @@ sub pad {
     } else {
       my $v = eval "package $context->{package}; $k";
       $pad->{$k} = $v;
+
+      # workaround for blessed globs
+      $pad->{$k} = "".$v if blessed $v and reftype $v eq "GLOB";
     }
   }
   return { pad => $pad };

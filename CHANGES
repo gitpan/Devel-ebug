@@ -1,5 +1,8 @@
 Revision history for Perl module Devel::ebug
 
+0.46 Mon Mar  6 20:52:22 GMT 2006
+     - workaround for bless globs (thanks to SAMV)
+
 0.45 Fri Sep  2 15:01:42 BST 2005
      - moved subroutine into basic information
      - moved ebug_http into its own distribution (patch by Jesse Vincent)
