@@ -13,3 +13,7 @@ sub add {
   my $c = $z + $x;
   return $c;
 }
+
+# unbreakable line
+my $breakable_line = 1;
+# other unbreakable line

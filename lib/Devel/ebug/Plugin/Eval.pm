@@ -11,7 +11,8 @@ sub eval {
     command => "eval",
     eval    => $eval,
   });
-  return $response->{eval};
+  return wantarray ? ( $response->{eval}, $response->{exception} ) :
+                     $response->{eval};
 }
 
 # yaml

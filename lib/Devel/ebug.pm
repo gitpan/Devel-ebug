@@ -15,7 +15,7 @@ __PACKAGE__->mk_accessors(qw(
     program socket proc
     package filename line codeline subroutine finished));
 
-our $VERSION = "0.46";
+our $VERSION = "0.47";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -124,15 +124,19 @@ Devel::ebug - A simple, extensible Perl debugger
   $ebug->step;
   $ebug->next;
   my($stdout, $stderr) = $ebug->output;
-  $ebug->break_point(6);
+  my $actual_line = $ebug->break_point(6);
   $ebug->break_point(6, '$e = 4');
   $ebug->break_point("t/Calc.pm", 29);
   $ebug->break_point("t/Calc.pm", 29, '$i == 2');
-  $ebug->break_point_subroutine("main::add");
+  my $actual_line = $ebug->break_point_subroutine("main::add");
   $ebug->break_point_delete(29);
   $ebug->break_point_delete("t/Calc.pm", 29);
   my @filenames    = $ebug->filenames();
   my @break_points = $ebug->break_points();
+  my @break_points = $ebug->break_points("t/Calc.pm");
+  my @break_points = $ebug->break_points_with_condition();
+  my @break_points = $ebug->break_points_with_condition("t/Calc.pm");
+  my @break_points = $ebug->all_break_points_with_condition();
   $ebug->watch_point('$x > 100');
   my $codelines = $ebug->codelines(@span);
   $ebug->run;
@@ -142,6 +146,7 @@ Devel::ebug - A simple, extensible Perl debugger
     print "Variable: $k = $v\n";
   }
   my $v = $ebug->eval('2 ** $exp');
+  my( $v, $is_exception ) = $ebug->eval('die 123');
   my $y = $ebug->yaml('$z');
   my @frames = $ebug->stack_trace;
   my @frames2 = $ebug->stack_trace_human;
@@ -219,21 +224,26 @@ Break points can be set in a few ways.
 
 A break point can be set at a line number in the current file:
 
-  $ebug->break_point(6);
+  my $actual_line = $ebug->break_point(6);
 
 A break point can be set at a line number in the current file with a
 condition that must be true for execution to stop at the break point:
 
-  $ebug->break_point(6, '$e = 4');
+  my $actual_line = $ebug->break_point(6, '$e = 4');
 
 A break point can be set at a line number in a file:
 
-  $ebug->break_point("t/Calc.pm", 29);
+  my $actual_line = $ebug->break_point("t/Calc.pm", 29);
 
 A break point can be set at a line number in a file with a condition
 that must be true for execution to stop at the break point:
 
-  $ebug->break_point("t/Calc.pm", 29, '$i == 2');
+  my $actual_line = $ebug->break_point("t/Calc.pm", 29, '$i == 2');
+
+Breakpoints can not be set on some lines (for example comments); in
+this case a breakpoint will be set at the next breakable line, and the
+line number will be returned. If no such line exists, no breakpoint is
+set and the function returns C<undef>.
 
 =head2 break_point_delete
 
@@ -252,15 +262,49 @@ The break_point_subroutine method sets a break point in a program
 right at the beginning of the subroutine. The subroutine is specified
 with the full package name:
 
-  $ebug->break_point_subroutine("main::add");
+  my $line = $ebug->break_point_subroutine("main::add");
   $ebug->break_point_subroutine("Calc::fib");
+
+The return value is the line at which the break point is set.
 
 =head2 break_points
 
-The break_points method returns a list of all the line numbers in the
-current file that have a break point set.
+The break_points method returns a list of all the line numbers in a
+given file that have a break point set.
+
+Return the list of breakpoints in the current file:
 
   my @break_points = $ebug->break_points();
+
+Return the list of breakpoints in a given file:
+
+  my @break_points = $ebug->break_points("t/Calc.pm");
+
+=head2 break_points_with_condition
+
+The break_points method returns a list of break points for a given file.
+
+Return the list of breakpoints in the current file:
+
+  my @break_points = $ebug->break_points_with_condition();
+
+Return the list of breakpoints in a given file:
+
+  my @break_points = $ebug->break_points_with_condition("t/Calc.pm");
+
+Each element of the list has the form
+
+  { filename  => "t/Calc.pm",
+    line      => 29,
+    condition => "$foo > 12",
+    }
+
+where C<condition> might not be present.
+
+=head2 all_break_points_with_condition
+
+Like C<break_points_with_condition> but returns a list of break points
+for the whole program.
 
 =head2 codeline
 
@@ -292,9 +336,15 @@ It can return a span of code lines in a file:
 =head2 eval
 
 The eval method evaluates Perl code in the current program and returns
-the result:
+the result. If the evalutation results in an exception, C<$@> is
+returned.
 
   my $v = $ebug->eval('2 ** $exp');
+
+In list context, eval also returns a flag indicating if the evalutation
+resulted in an exception.
+
+  my( $v, $is_exception ) = $ebug->eval('die 123');
 
 =head2 filename
 

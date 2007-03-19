@@ -1,5 +1,11 @@
 Revision history for Perl module Devel::ebug
 
+0.47 Mon Mar 19 19:43:35 GMT 2007
+     - add break_points_with_condition and all_break_points_with_condition,
+       make break_point and break_point_subroutine return a line number,
+       make break_points optionally take a filename, make eval return
+       whether there was an exception (patch by Mattia Barbon)
+
 0.46 Mon Mar  6 20:52:22 GMT 2006
      - workaround for bless globs (thanks to SAMV)
 

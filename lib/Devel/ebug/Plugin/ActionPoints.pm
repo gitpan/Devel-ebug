@@ -2,7 +2,7 @@ package Devel::ebug::Plugin::ActionPoints;
 use strict;
 use warnings;
 use base qw(Exporter);
-our @EXPORT = qw(break_point break_point_delete break_point_subroutine break_points watch_point);
+our @EXPORT = qw(break_point break_point_delete break_point_subroutine break_points break_points_with_condition all_break_points_with_condition watch_point);
 
 # set a break point (by default in the current file)
 sub break_point {
@@ -20,6 +20,7 @@ sub break_point {
     line      => $line,
     condition => $condition,
   });
+  return $response->{line};
 }
 
 # delete a break point (by default in the current file)
@@ -49,12 +50,36 @@ sub break_point_subroutine {
     command    => "break_point_subroutine",
     subroutine => $subroutine,
   });
+  return $response->{line};
 }
 
 # list break points
 sub break_points {
-  my($self) = @_;
-  my $response = $self->talk({ command => "break_points" });
+  my($self, $filename) = @_;
+  my $response = $self->talk({
+    command => "break_points",
+    filename => $filename,
+  });
+  return @{$response->{break_points}};
+}
+
+# list break points with condition
+sub break_points_with_condition {
+  my($self, $filename) = @_;
+  my $response = $self->talk({
+    command => "break_points_with_condition",
+    filename => $filename,
+  });
+  return @{$response->{break_points}};
+}
+
+# list break points with condition for the whole program
+sub all_break_points_with_condition {
+  my($self, $filename) = @_;
+  my $response = $self->talk({
+    command => "all_break_points_with_condition",
+    filename => $filename,
+  });
   return @{$response->{break_points}};
 }
 

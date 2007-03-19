@@ -1,8 +1,8 @@
 --- #YAML:1.0
 name: Devel-ebug
-version: 0.46
+version: 0.47
 author:
   - Leon Brocard, C<< <acme@astray.com> >>
 abstract: A simple, extensible Perl debugger
 license: perl
-generated_by: Module::Build version 0.2611, without YAML.pm
+generated_by: Module::Build version 0.2612, without YAML.pm

@@ -28,6 +28,10 @@ is_deeply(\@codelines, [
   '  my $c = $z + $x;',
   '  return $c;',
   '}',
+  '',
+  '# unbreakable line',
+  'my $breakable_line = 1;',
+  '# other unbreakable line',
 ]);
 
 @codelines = $ebug->codelines(1, 3, 4, 5);

@@ -22,9 +22,9 @@ sub eval {
 
   my $v = eval "package $context->{package}; $eval";
   if ($@) {
-    return { eval => $@ };
+    return { eval => $@, exception => 1 };
   } else {
-    return { eval => $v };
+    return { eval => $v, exception => 0 };
   }
 }
 
