@@ -3,11 +3,11 @@ use strict;
 use warnings;
 use IO::Socket::INET;
 use String::Koremutake;
-use YAML;
+use YAML::Syck;
 use Module::Pluggable
   search_path => 'Devel::ebug::Backend::Plugin',
   require     => 1;
-our $VERSION = "0.47";
+our $VERSION = "0.48";
 
 use vars qw(@dbline %dbline);
 

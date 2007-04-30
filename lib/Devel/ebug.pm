@@ -7,7 +7,7 @@ use Devel::StackTrace;
 use IO::Socket::INET;
 use Proc::Background;
 use String::Koremutake;
-use YAML;
+use YAML::Syck;
 use Module::Pluggable require => 1;
 
 use base qw(Class::Accessor::Chained::Fast);
@@ -15,7 +15,7 @@ __PACKAGE__->mk_accessors(qw(
     program socket proc
     package filename line codeline subroutine finished));
 
-our $VERSION = "0.47";
+our $VERSION = "0.48";
 
 # let's run the code under our debugger and connect to the server it
 # starts up

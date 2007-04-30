@@ -4,10 +4,18 @@ use warnings;
 
 my $stdout = "";
 my $stderr = "";
-close STDOUT;
-open STDOUT, '>', \$stdout or die "Can't open STDOUT: $!";
-close STDERR;
-open STDERR, '>', \$stderr or die "Can't open STDOUT: $!";
+
+if ($ENV{PERL_DEBUG_DONT_RELAY_IO}) {
+  open NULL, ">/dev/null";
+  open NULL, '>', \$stdout;
+  open NULL, '>', \$stderr;
+}
+else {
+  close STDOUT;
+  open STDOUT, '>', \$stdout or die "Can't open STDOUT: $!";
+  close STDERR;
+  open STDERR, '>', \$stderr or die "Can't open STDOUT: $!";
+}
 
 sub register_commands {
   return (output => { sub => \&output });

@@ -1,5 +1,16 @@
 Revision history for Perl module Devel::ebug
 
+0.48 Mon Apr 30 20:37:06 CEST 2007
+     - Added ebug-server(1), a remote debugger server
+     - Added ebug-client(1), a remote debugger client
+     - Fixed [?h] input handling so Perl expression with 'h'
+       or '?' won't wrongly invoke help
+     - Added check for PERL_DEBUG_DONT_RELAY_IO environment
+       variable to keep STDOUT/STDERR on server side, instead of
+       relaying to debugger frontend
+     - Switched YAML.pm to YAML::Syck for performance reasons
+     - All patches by Taisuke Yamada
+
 0.47 Mon Mar 19 19:43:35 GMT 2007
      - add break_points_with_condition and all_break_points_with_condition,
        make break_point and break_point_subroutine return a line number,

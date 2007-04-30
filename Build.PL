@@ -15,7 +15,7 @@ my $requires = {
   'Scalar::Util'         => '0',
   'String::Koremutake'   => '0',
   'Test::More'           => '0',
-  'YAML'                 => '0.39',
+  'YAML::Syck'           => '0.85',
 };
 
 
@@ -29,6 +29,6 @@ my $build = Module::Build->new(
   license            => 'perl',
   module_name        => 'Devel::ebug',
   requires           => $requires,
-  script_files       => ['ebug'],
+  script_files       => ['ebug', 'ebug_client', 'ebug_server'],
 );
 $build->create_build_script;

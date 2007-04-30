@@ -1,6 +1,8 @@
 Build.PL
 CHANGES
 ebug
+ebug_client
+ebug_server
 lib/Devel/ebug.pm
 lib/Devel/ebug/Backend.pm
 lib/Devel/ebug/Backend/Plugin/ActionPoints.pm
