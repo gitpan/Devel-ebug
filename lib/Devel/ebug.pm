@@ -15,7 +15,7 @@ __PACKAGE__->mk_accessors(qw(
     program socket proc
     package filename line codeline subroutine finished));
 
-our $VERSION = "0.48";
+our $VERSION = "0.49";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -500,7 +500,9 @@ Leon Brocard, C<< <acme@astray.com> >>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2005, Leon Brocard
+Copyright (C) 2005-8, Leon Brocard
+
+=head1 LICENSE
 
 This module is free software; you can redistribute it or modify it
 under the same terms as Perl itself.

@@ -1,5 +1,8 @@
 Revision history for Perl module Devel::ebug
 
+0.49 Thu Oct 16 20:07:34 BST 2008
+     - Add a human-readable license to the documentation
+
 0.48 Mon Apr 30 20:37:06 CEST 2007
      - Added ebug-server(1), a remote debugger server
      - Added ebug-client(1), a remote debugger client

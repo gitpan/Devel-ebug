@@ -16,15 +16,19 @@ SYNOPSIS
       $ebug->step;
       $ebug->next;
       my($stdout, $stderr) = $ebug->output;
-      $ebug->break_point(6);
+      my $actual_line = $ebug->break_point(6);
       $ebug->break_point(6, '$e = 4');
       $ebug->break_point("t/Calc.pm", 29);
       $ebug->break_point("t/Calc.pm", 29, '$i == 2');
-      $ebug->break_point_subroutine("main::add");
+      my $actual_line = $ebug->break_point_subroutine("main::add");
       $ebug->break_point_delete(29);
       $ebug->break_point_delete("t/Calc.pm", 29);
       my @filenames    = $ebug->filenames();
       my @break_points = $ebug->break_points();
+      my @break_points = $ebug->break_points("t/Calc.pm");
+      my @break_points = $ebug->break_points_with_condition();
+      my @break_points = $ebug->break_points_with_condition("t/Calc.pm");
+      my @break_points = $ebug->all_break_points_with_condition();
       $ebug->watch_point('$x > 100');
       my $codelines = $ebug->codelines(@span);
       $ebug->run;
@@ -34,6 +38,7 @@ SYNOPSIS
         print "Variable: $k = $v\n";
       }
       my $v = $ebug->eval('2 ** $exp');
+      my( $v, $is_exception ) = $ebug->eval('die 123');
       my $y = $ebug->yaml('$z');
       my @frames = $ebug->stack_trace;
       my @frames2 = $ebug->stack_trace_human;
@@ -102,21 +107,26 @@ METHODS
 
     A break point can be set at a line number in the current file:
 
-      $ebug->break_point(6);
+      my $actual_line = $ebug->break_point(6);
 
     A break point can be set at a line number in the current file with a
     condition that must be true for execution to stop at the break point:
 
-      $ebug->break_point(6, '$e = 4');
+      my $actual_line = $ebug->break_point(6, '$e = 4');
 
     A break point can be set at a line number in a file:
 
-      $ebug->break_point("t/Calc.pm", 29);
+      my $actual_line = $ebug->break_point("t/Calc.pm", 29);
 
     A break point can be set at a line number in a file with a condition
     that must be true for execution to stop at the break point:
 
-      $ebug->break_point("t/Calc.pm", 29, '$i == 2');
+      my $actual_line = $ebug->break_point("t/Calc.pm", 29, '$i == 2');
+
+    Breakpoints can not be set on some lines (for example comments); in this
+    case a breakpoint will be set at the next breakable line, and the line
+    number will be returned. If no such line exists, no breakpoint is set
+    and the function returns "undef".
 
   break_point_delete
     The break_point_delete method deletes an existing break point. A break
@@ -133,14 +143,46 @@ METHODS
     at the beginning of the subroutine. The subroutine is specified with the
     full package name:
 
-      $ebug->break_point_subroutine("main::add");
+      my $line = $ebug->break_point_subroutine("main::add");
       $ebug->break_point_subroutine("Calc::fib");
 
+    The return value is the line at which the break point is set.
+
   break_points
-    The break_points method returns a list of all the line numbers in the
-    current file that have a break point set.
+    The break_points method returns a list of all the line numbers in a
+    given file that have a break point set.
+
+    Return the list of breakpoints in the current file:
 
       my @break_points = $ebug->break_points();
+
+    Return the list of breakpoints in a given file:
+
+      my @break_points = $ebug->break_points("t/Calc.pm");
+
+  break_points_with_condition
+    The break_points method returns a list of break points for a given file.
+
+    Return the list of breakpoints in the current file:
+
+      my @break_points = $ebug->break_points_with_condition();
+
+    Return the list of breakpoints in a given file:
+
+      my @break_points = $ebug->break_points_with_condition("t/Calc.pm");
+
+    Each element of the list has the form
+
+      { filename  => "t/Calc.pm",
+        line      => 29,
+        condition => "$foo > 12",
+        }
+
+    where "condition" might not be present.
+
+  all_break_points_with_condition
+    Like "break_points_with_condition" but returns a list of break points
+    for the whole program.
 
   codeline
     The codeline method returns the line of code that is just about to be
@@ -169,9 +211,14 @@ METHODS
 
   eval
     The eval method evaluates Perl code in the current program and returns
-    the result:
+    the result. If the evalutation results in an exception, $@ is returned.
 
       my $v = $ebug->eval('2 ** $exp');
+
+    In list context, eval also returns a flag indicating if the evalutation
+    resulted in an exception.
+
+      my( $v, $is_exception ) = $ebug->eval('die 123');
 
   filename
     The filename method returns the filename of the currently running code:
@@ -306,8 +353,9 @@ AUTHOR
     Leon Brocard, "<acme@astray.com>"
 
 COPYRIGHT
-    Copyright (C) 2005, Leon Brocard
+    Copyright (C) 2005-8, Leon Brocard
 
+LICENSE
     This module is free software; you can redistribute it or modify it under
     the same terms as Perl itself.
 
