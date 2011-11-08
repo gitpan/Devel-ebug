@@ -1,6 +1,7 @@
 {
    "abstract" : "A simple, extensible Perl debugger",
    "author" : [
+      "Latest releases by Brock Wilcox, C<< <awwaiid@thelackthereof.org> >>",
       "Leon Brocard, C<< <acme@astray.com> >>"
    ],
    "dynamic_config" : 1,
@@ -49,7 +50,7 @@
       },
       "Devel::ebug" : {
          "file" : "lib/Devel/ebug.pm",
-         "version" : "0.50"
+         "version" : "0.51"
       },
       "Devel::ebug::Backend::Plugin::ActionPoints" : {
          "file" : "lib/Devel/ebug/Backend/Plugin/ActionPoints.pm",
@@ -142,5 +143,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.50"
+   "version" : "0.51"
 }

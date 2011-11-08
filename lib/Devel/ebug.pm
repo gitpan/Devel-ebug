@@ -12,10 +12,11 @@ use Module::Pluggable require => 1;
 
 use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
+    port
     program socket proc
     package filename line codeline subroutine finished));
 
-our $VERSION = "0.50";
+our $VERSION = "0.51";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -42,30 +43,42 @@ sub load {
   $self->proc($proc);
   $ENV{SECRET} = "";
 
-  # try and connect to the server
-  my $socket;
-  foreach (1..10) {
-    $socket = IO::Socket::INET->new(
-      PeerAddr => "localhost",
-      PeerPort => $port,
-      Proto    => 'tcp',
-      Reuse      => 1,
-      ReuserAddr => 1,
+  $self->attach($port, $secret);
+}
+
+sub attach {
+    my ($self, $port, $key) = @_;
+
+    # import all the plugins into our namespace
+    do { eval "use $_ " } for $self->plugins;
+
+    # try and connect to the server
+    my $socket;
+    foreach ( 1 .. 10 ) {
+        $socket = IO::Socket::INET->new(
+            PeerAddr   => "localhost",
+            PeerPort   => $port,
+            Proto      => 'tcp',
+            Reuse      => 1,
+            ReuserAddr => 1,
+        );
+        last if $socket;
+        sleep 1;
+    }
+    die "Could not connect: $!" unless $socket;
+    $self->socket($socket);
+
+    my $response = $self->talk(
+        {   command => "ping",
+            version => $VERSION,
+            secret  => $key,
+        }
     );
-    last if $socket;
-    sleep 1;
-  }
-  die "Could not connect: $!" unless $socket;
-  $self->socket($socket);
- 
-  my $response = $self->talk({
-    command => "ping",
-    version => $VERSION,
-    secret  => $secret,
-  });
-  my $version = $response->{version};
-  die "Client version $version != our version $VERSION" unless $version eq $VERSION;
-  $self->basic; # get basic information for the first line
+    my $version = $response->{version};
+    die "Client version $version != our version $VERSION"
+        unless $version eq $VERSION;
+
+    $self->basic;    # get basic information for the first line
 }
 
 #
@@ -496,11 +509,14 @@ Devel::ebug does not handle signals under Windows.
 
 =head1 AUTHOR
 
+Latest releases by Brock Wilcox, C<< <awwaiid@thelackthereof.org> >>
+
 Leon Brocard, C<< <acme@astray.com> >>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2005-8, Leon Brocard
+Copyright (C) 2005-2008, Leon Brocard
+Copyright (C) 2011, Brock Wilcox
 
 =head1 LICENSE
 
