@@ -50,7 +50,7 @@
       },
       "Devel::ebug" : {
          "file" : "lib/Devel/ebug.pm",
-         "version" : "0.51"
+         "version" : "0.52"
       },
       "Devel::ebug::Backend::Plugin::ActionPoints" : {
          "file" : "lib/Devel/ebug/Backend/Plugin/ActionPoints.pm",
@@ -143,5 +143,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.51"
+   "version" : "0.52"
 }

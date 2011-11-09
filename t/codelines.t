@@ -7,11 +7,18 @@ use Devel::ebug;
 
 my $ebug = Devel::ebug->new;
 $ebug->program("t/calc.pl");
+$ebug->backend("$^X bin/ebug_backend_perl");
 $ebug->load;
 
 # Let's get some lines of code
 
+SKIP: {
+
 my @codelines = $ebug->codelines();
+
+  skip "Don't try lining up codelines because of sitecustomize", 11
+    if $codelines[0] =~ /sitecustomize/;
+
 is_deeply(\@codelines, [
   '#!perl',
   '',
@@ -44,6 +51,7 @@ is_deeply(\@codelines, [
 
 $ebug = Devel::ebug->new;
 $ebug->program("t/calc_oo.pl");
+$ebug->backend("$^X bin/ebug_backend_perl");
 $ebug->load;
 @codelines = $ebug->codelines("t/calc_oo.pl", 7, 8);
 is_deeply(\@codelines, [
@@ -61,6 +69,7 @@ is_deeply(\@codelines, [
 is(scalar(@codelines), 34);
 
 $ebug->program("t/pod.pl");
+$ebug->backend("$^X bin/ebug_backend_perl");
 $ebug->load;
 @codelines = $ebug->codelines();
 is($codelines[0], '#!perl');
@@ -69,3 +78,5 @@ is($codelines[9], '');
 is($codelines[10], '');
 is($codelines[11], '');
 is($codelines[31], 'sub add {');
+
+}
