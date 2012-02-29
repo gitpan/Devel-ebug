@@ -13,7 +13,11 @@ sub run {
   my $self = shift;
   my $backend = shift;
 
-  my $filename = join "", @ARGV;
+  $SIG{INT} = sub {
+    die "INT";
+  };
+
+  my $filename = join " ", @ARGV;
 
   unless ($filename) {
     $filename = '-e "Interactive ebugging shell"';
@@ -106,7 +110,7 @@ restart Restart the program
       print "STDOUT:\n$stdout\n";
       print "STDERR:\n$stderr\n";
     } elsif ($command eq 'r') {
-      $ebug->run;
+      eval { $ebug->run };
     } elsif ($command eq 'restart') {
       $ebug->load;
     } elsif ($command =~ /^ret ?(.*)/) {

@@ -10,6 +10,8 @@ use String::Koremutake;
 use YAML::Syck;
 use Module::Pluggable require => 1;
 
+use FindBin qw($Bin);
+
 use base qw(Class::Accessor::Chained::Fast);
 __PACKAGE__->mk_accessors(qw(
     backend
@@ -17,7 +19,7 @@ __PACKAGE__->mk_accessors(qw(
     program socket proc
     package filename line codeline subroutine finished));
 
-our $VERSION = "0.52";
+our $VERSION = "0.53_01";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -34,7 +36,7 @@ sub load {
   my $port   = 3141 + ($rand % 1024);
 
   $ENV{SECRET} = $secret;
-  my $backend = $self->backend || "ebug_backend_perl";
+  my $backend = $self->backend || "$Bin/ebug_backend_perl";
   my $command = "$backend $program";;
   my $proc = Proc::Background->new(
     {'die_upon_destroy' => 1},
@@ -139,7 +141,7 @@ Devel::ebug - A simple, extensible Perl debugger
   $ebug->next;
   my($stdout, $stderr) = $ebug->output;
   my $actual_line = $ebug->break_point(6);
-  $ebug->break_point(6, '$e = 4');
+  $ebug->break_point(6, '$e == 4');
   $ebug->break_point("t/Calc.pm", 29);
   $ebug->break_point("t/Calc.pm", 29, '$i == 2');
   my $actual_line = $ebug->break_point_subroutine("main::add");

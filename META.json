@@ -5,7 +5,7 @@
       "Leon Brocard, C<< <acme@astray.com> >>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.112150",
+   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.112621",
    "license" : [
       "perl_5"
    ],
@@ -50,7 +50,7 @@
       },
       "Devel::ebug" : {
          "file" : "lib/Devel/ebug.pm",
-         "version" : "0.52"
+         "version" : "0.53_01"
       },
       "Devel::ebug::Backend::Plugin::ActionPoints" : {
          "file" : "lib/Devel/ebug/Backend/Plugin/ActionPoints.pm",
@@ -137,11 +137,11 @@
          "version" : 0
       }
    },
-   "release_status" : "stable",
+   "release_status" : "testing",
    "resources" : {
       "license" : [
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.52"
+   "version" : "0.53_01"
 }
