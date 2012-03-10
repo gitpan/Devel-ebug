@@ -7,7 +7,8 @@ use Devel::StackTrace;
 use IO::Socket::INET;
 use Proc::Background;
 use String::Koremutake;
-use YAML::Syck;
+# use YAML::Syck;
+use YAML;
 use Module::Pluggable require => 1;
 
 use FindBin qw($Bin);
@@ -19,7 +20,7 @@ __PACKAGE__->mk_accessors(qw(
     program socket proc
     package filename line codeline subroutine finished));
 
-our $VERSION = "0.53_01";
+our $VERSION = "0.53_02";
 
 # let's run the code under our debugger and connect to the server it
 # starts up

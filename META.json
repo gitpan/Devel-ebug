@@ -15,11 +15,6 @@
    },
    "name" : "Devel-ebug",
    "prereqs" : {
-      "build" : {
-         "requires" : {
-            "YAML" : 0
-         }
-      },
       "configure" : {
          "requires" : {
             "Module::Build" : "0.38"
@@ -39,7 +34,7 @@
             "String::Koremutake" : 0,
             "Test::Expect" : 0,
             "Test::More" : 0,
-            "YAML::Syck" : "0.85"
+            "YAML" : 0
          }
       }
    },
@@ -50,7 +45,7 @@
       },
       "Devel::ebug" : {
          "file" : "lib/Devel/ebug.pm",
-         "version" : "0.53_01"
+         "version" : "0.53_02"
       },
       "Devel::ebug::Backend::Plugin::ActionPoints" : {
          "file" : "lib/Devel/ebug/Backend/Plugin/ActionPoints.pm",
@@ -143,5 +138,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.53_01"
+   "version" : "0.53_02"
 }

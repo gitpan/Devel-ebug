@@ -3,12 +3,13 @@ use strict;
 use warnings;
 use IO::Socket::INET;
 use String::Koremutake;
-use YAML::Syck;
+# use YAML::Syck;
+use YAML;
 use Module::Pluggable
   search_path => 'Devel::ebug::Backend::Plugin',
   require     => 1;
 
-our $VERSION = "0.53_01";
+our $VERSION = "0.53_02";
 use vars qw(@dbline %dbline);
 
 # Let's catch INT signals and set a flag when they occur

@@ -6,7 +6,6 @@ use Carp;
 use Class::Accessor::Chained::Fast;
 use Devel::ebug;
 use Term::ReadLine;
-use YAML::Syck;
 use base qw(Class::Accessor::Chained::Fast);
 
 sub run {
@@ -110,7 +109,9 @@ restart Restart the program
       print "STDOUT:\n$stdout\n";
       print "STDERR:\n$stderr\n";
     } elsif ($command eq 'r') {
-      eval { $ebug->run };
+      $ebug->run;
+      # TODO: Consider using this instead:
+      # eval { $ebug->run };
     } elsif ($command eq 'restart') {
       $ebug->load;
     } elsif ($command =~ /^ret ?(.*)/) {

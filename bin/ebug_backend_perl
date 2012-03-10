@@ -2,6 +2,5 @@
 use strict;
 use warnings;
 use lib 'lib';
-#my $program = $ARGV[0];
 my $program = "@ARGV";
 exec("$^X -Ilib -d:ebug::Backend $program");
