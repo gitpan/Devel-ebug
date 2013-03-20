@@ -26,6 +26,7 @@ my $context = {
   watch_points => [],
 };
 
+
 # Commands that the back end can respond to
 # Set record if the command changes start and should thus be recorded
 # in order for undo to work properly
@@ -179,6 +180,21 @@ sub sub {
     }
   }
 }
+
+sub DB::postponed {
+    # If this is a subroutine, let postponed_sub() deal with it.
+    return &postponed_sub unless ref \$_[0] eq 'GLOB';
+
+    my ($fileName) = @_;
+    $fileName =~ s/^.*_<//;
+
+    if (exists $DB::break_on_load{$fileName}
+      || exists $DB::break_on_load{File::Spec->rel2abs( $fileName)} ){
+        $DB::single = 1;
+    }
+
+}
+
 
 sub fetch_codelines {
   my ($filename, @lines) = @_;

@@ -5,7 +5,7 @@
       "Leon Brocard, C<< <acme@astray.com> >>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.112621",
+   "generated_by" : "Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "perl_5"
    ],
@@ -17,24 +17,24 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "Module::Build" : "0.38"
+            "Module::Build" : "0.40"
          }
       },
       "runtime" : {
          "requires" : {
-            "Carp" : 0,
-            "Class::Accessor::Chained::Fast" : 0,
-            "Devel::StackTrace" : 0,
-            "File::Find" : 0,
-            "IO::Socket::INET" : 0,
-            "Module::Pluggable" : 0,
-            "PadWalker" : 0,
-            "Proc::Background" : 0,
-            "Scalar::Util" : 0,
-            "String::Koremutake" : 0,
-            "Test::Expect" : 0,
-            "Test::More" : 0,
-            "YAML" : 0
+            "Carp" : "0",
+            "Class::Accessor::Chained::Fast" : "0",
+            "Devel::StackTrace" : "0",
+            "File::Find" : "0",
+            "IO::Socket::INET" : "0",
+            "Module::Pluggable" : "0",
+            "PadWalker" : "0",
+            "Proc::Background" : "0",
+            "Scalar::Util" : "0",
+            "String::Koremutake" : "0",
+            "Test::Expect" : "0",
+            "Test::More" : "0",
+            "YAML" : "0"
          }
       }
    },
@@ -45,7 +45,7 @@
       },
       "Devel::ebug" : {
          "file" : "lib/Devel/ebug.pm",
-         "version" : "0.53"
+         "version" : "0.54"
       },
       "Devel::ebug::Backend::Plugin::ActionPoints" : {
          "file" : "lib/Devel/ebug/Backend/Plugin/ActionPoints.pm",
@@ -138,5 +138,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.53"
+   "version" : "0.54"
 }

@@ -5,9 +5,9 @@ author:
   - 'Leon Brocard, C<< <acme@astray.com> >>'
 build_requires: {}
 configure_requires:
-  Module::Build: 0.38
+  Module::Build: 0.40
 dynamic_config: 1
-generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.112621'
+generated_by: 'Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -19,7 +19,7 @@ provides:
     version: 0
   Devel::ebug:
     file: lib/Devel/ebug.pm
-    version: 0.53
+    version: 0.54
   Devel::ebug::Backend::Plugin::ActionPoints:
     file: lib/Devel/ebug/Backend/Plugin/ActionPoints.pm
     version: 0
@@ -99,4 +99,4 @@ requires:
   YAML: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.53
+version: 0.54
