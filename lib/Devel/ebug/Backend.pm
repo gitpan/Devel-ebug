@@ -1,4 +1,5 @@
 package DB;
+$DB::VERSION = '0.56';
 use strict;
 use warnings;
 use IO::Socket::INET;
@@ -9,7 +10,6 @@ use Module::Pluggable
   search_path => 'Devel::ebug::Backend::Plugin',
   require     => 1;
 
-our $VERSION = "0.55";
 use vars qw(@dbline %dbline);
 
 # Let's catch INT signals and set a flag when they occur
@@ -185,11 +185,15 @@ sub DB::postponed {
     # If this is a subroutine, let postponed_sub() deal with it.
     return &postponed_sub unless ref \$_[0] eq 'GLOB';
 
-    my ($fileName) = @_;
-    $fileName =~ s/^.*_<//;
+    my ($filePath) = @_;
+    $filePath =~ s/^.*_<//;
 
-    if (exists $DB::break_on_load{$fileName}
-      || exists $DB::break_on_load{File::Spec->rel2abs( $fileName)} ){
+    my ($volume,$directories,$fileName) = File::Spec->splitpath( $filePath );
+
+    #test if the file name match with relative path/absolute path/single file name
+    if (exists $DB::break_on_load{$filePath}
+        || exists $DB::break_on_load{File::Spec->rel2abs( $filePath)}
+        || exists $DB::break_on_load{$fileName}){
         $DB::single = 1;
     }
 
@@ -240,7 +244,7 @@ sub END {
 }
 
 package DB::fake;
-
+$DB::fake::VERSION = '0.56';
 sub at_exit {
   1;
 }

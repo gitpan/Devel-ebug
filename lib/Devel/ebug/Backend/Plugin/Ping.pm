@@ -1,4 +1,5 @@
 package Devel::ebug::Backend::Plugin::Ping;
+$Devel::ebug::Backend::Plugin::Ping::VERSION = '0.56';
 use strict;
 use warnings;
 

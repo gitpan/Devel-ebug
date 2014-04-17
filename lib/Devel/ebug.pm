@@ -1,4 +1,5 @@
 package Devel::ebug;
+$Devel::ebug::VERSION = '0.56';
 use strict;
 use warnings;
 use Carp;
@@ -19,8 +20,6 @@ __PACKAGE__->mk_accessors(qw(
     port
     program socket proc
     package filename line codeline subroutine finished));
-
-our $VERSION = "0.55";
 
 # let's run the code under our debugger and connect to the server it
 # starts up
@@ -74,13 +73,13 @@ sub attach {
 
     my $response = $self->talk(
         {   command => "ping",
-            version => $VERSION,
+            version => $Devel::ebug::VERSION,
             secret  => $key,
         }
     );
     my $version = $response->{version};
-    die "Client version $version != our version $VERSION"
-        unless $version eq $VERSION;
+    die "Client version $version != our version $Devel::ebug::VERSION"
+        unless $version eq $Devel::ebug::VERSION;
 
     $self->basic;    # get basic information for the first line
 }
@@ -462,19 +461,19 @@ The stack_trace method returns the current stack trace, using
 L<Devel::StackTrace>. It returns a list of L<Devel::StackTraceFrame>
 methods:
 
-  my @frames = $ebug->stack_trace;
-  foreach my $frame (@trace) {
-    print $frame->package, "->",$frame->subroutine, 
-    "(", $frame->filename, "#", $frame->line, ")\n";
+  my @traces = $ebug->stack_trace;
+  foreach my $trace (@traces) {
+    print $trace->package, "->",$trace->subroutine,
+    "(", $trace->filename, "#", $trace->line, ")\n";
   }
 
 =head2 stack_trace_human
 
 The stack_trace_human method returns the current stack trace in a human-readable format:
 
-  my @frames = $ebug->stack_trace_human;
-  foreach my $frame (@trace) {
-    print "$frame\n";
+  my @traces = $ebug->stack_trace_human;
+  foreach my $trace (@traces) {
+    print "$trace\n";
   }
 
 =head2 undo

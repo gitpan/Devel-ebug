@@ -1,4 +1,5 @@
 package Devel::ebug::Plugin::ActionPoints;
+$Devel::ebug::Plugin::ActionPoints::VERSION = '0.56';
 use strict;
 use warnings;
 use base qw(Exporter);

@@ -1,4 +1,5 @@
 package Devel::ebug::Plugin::Codelines;
+$Devel::ebug::Plugin::Codelines::VERSION = '0.56';
 use strict;
 use warnings;
 use base qw(Exporter);

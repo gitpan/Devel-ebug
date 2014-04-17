@@ -1,4 +1,5 @@
 package Devel::ebug::Backend::Plugin::ActionPoints;
+$Devel::ebug::Backend::Plugin::ActionPoints::VERSION = '0.56';
 use strict;
 use warnings;
 use File::Spec;

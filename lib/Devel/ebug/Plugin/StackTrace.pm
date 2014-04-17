@@ -1,4 +1,5 @@
 package Devel::ebug::Plugin::StackTrace;
+$Devel::ebug::Plugin::StackTrace::VERSION = '0.56';
 use strict;
 use warnings;
 use Scalar::Util qw(blessed);

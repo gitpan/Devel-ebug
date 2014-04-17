@@ -1,4 +1,5 @@
 package Devel::ebug::Console;
+$Devel::ebug::Console::VERSION = '0.56';
 use strict;
 use warnings;
 use lib 'lib';
@@ -52,11 +53,11 @@ sub run {
       print "ebug: Program finished. Enter 'restart' or 'q'\n";
     } else {
       if ($list_always) {
-	show_codelines($codelines, $ebug, $list_lines_count) if($list_always);
+        show_codelines($codelines, $ebug, $list_lines_count) if($list_always);
       } else {
-	print $ebug->subroutine
-	  . "(" . $ebug->filename . "#" . $ebug->line . "):\n"
-	  . $ebug->codeline, "\n";
+        print $ebug->subroutine
+        . "(" . $ebug->filename . "#" . $ebug->line . "):\n"
+        . $ebug->codeline, "\n";
       }
     }
 
@@ -69,6 +70,7 @@ sub run {
 
       b Set break point at a line number (eg: b 6, b code.pl 6, b code.pl 6 $x > 7,
       b Calc::fib)
+     bf break on file loading (eg: bf Calc.pm)
       d Delete a break point (d 6, d code.pl 6)
       e Eval Perl code and print the result (eg: e $x+$y)
       f Show all the filenames loaded
@@ -97,8 +99,8 @@ restart Restart the program
     } elsif ($command eq 'p') {
       my $pad = $ebug->pad_human;
       foreach my $k (sort keys %$pad) {
-	my $v = $pad->{$k};
-	print "  $k = $v;\n";
+        my $v = $pad->{$k};
+        print "  $k = $v;\n";
       }
     } elsif ($command eq 's') {
       $ebug->step;
@@ -119,7 +121,7 @@ restart Restart the program
     } elsif ($command eq 'T') {
       my @trace = $ebug->stack_trace_human;
       foreach my $frame (@trace) {
-	print "$frame\n";
+        print "$frame\n";
       }
     } elsif ($command eq 'f') {
       print "$_\n" foreach $ebug->filenames;
@@ -130,6 +132,8 @@ restart Restart the program
       $ebug->break_point($1, $2, $3);
     } elsif ($command =~ /^b (.+)/) {
       $ebug->break_point_subroutine($1);
+    } elsif ($command =~ /^bf (.+)/) {
+      $ebug->break_on_load($1);
     } elsif ($command =~ /^d (.+?) (\d+)/) {
       $ebug->break_point_delete($1, $2);
     } elsif ($command =~ /^d (\d+)/) {

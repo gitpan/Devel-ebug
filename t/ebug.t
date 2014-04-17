@@ -9,7 +9,7 @@ eval "use Test::Expect";
 plan skip_all => "Test::Expect required for testing ebug: $@" if $@;
 eval "use Expect::Simple";
 plan skip_all => "Expect::Simple required for testing ebug: $@" if $@;
-plan tests => 17;
+plan tests => 19;
 
 expect_run(
   command => "PERL_RL=\"o=0\" $^X bin/ebug --backend \"$^X bin/ebug_backend_perl\" t/calc.pl",
@@ -25,6 +25,7 @@ expect("h", 'Commands:
 
       b Set break point at a line number (eg: b 6, b code.pl 6, b code.pl 6 $x > 7,
       b Calc::fib)
+     bf break on file loading (eg: bf Calc.pm)
       d Delete a break point (d 6, d code.pl 6)
       e Eval Perl code and print the result (eg: e $x+$y)
       f Show all the filenames loaded
@@ -51,6 +52,7 @@ expect("", "main(t/calc.pl#5):\nmy \$e = add(\$q, \$w);", 'step again');
 expect("n", "main(t/calc.pl#6):\n\$e++;", 'next');
 expect("r", qq{main(t/calc.pl#9):\nprint "\$e\\n";}, 'run');
 expect("r", qq{}, 'run to end');
-# expect("r", qq{Program finished. Enter 'restart' or 'q'}, 'run to end');
-# expect("q", qq{});
+expect("r", qq{Program finished. Enter 'restart' or 'q'}, 'run to end');
+expect_quit();
+exit;
 

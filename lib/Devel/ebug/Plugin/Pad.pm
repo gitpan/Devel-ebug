@@ -1,4 +1,5 @@
 package Devel::ebug::Plugin::Pad;
+$Devel::ebug::Plugin::Pad::VERSION = '0.56';
 use strict;
 use warnings;
 use base qw(Exporter);

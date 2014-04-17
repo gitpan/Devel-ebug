@@ -1,4 +1,5 @@
 package Devel::ebug::Backend::Plugin::Filenames;
+$Devel::ebug::Backend::Plugin::Filenames::VERSION = '0.56';
 use strict;
 use warnings;
 

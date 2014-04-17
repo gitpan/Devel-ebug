@@ -1,4 +1,5 @@
 package Devel::ebug::Plugin::Basic;
+$Devel::ebug::Plugin::Basic::VERSION = '0.56';
 use strict;
 use warnings;
 use base qw(Exporter);

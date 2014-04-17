@@ -1,4 +1,5 @@
 package Devel::ebug::Backend::Plugin::StackTrace;
+$Devel::ebug::Backend::Plugin::StackTrace::VERSION = '0.56';
 use strict;
 use warnings;
 use Devel::StackTrace;

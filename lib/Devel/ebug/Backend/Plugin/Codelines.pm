@@ -1,4 +1,5 @@
 package Devel::ebug::Backend::Plugin::Codelines;
+$Devel::ebug::Backend::Plugin::Codelines::VERSION = '0.56';
 use strict;
 use warnings;
 

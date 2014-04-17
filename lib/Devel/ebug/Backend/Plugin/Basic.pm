@@ -1,4 +1,5 @@
 package Devel::ebug::Backend::Plugin::Basic;
+$Devel::ebug::Backend::Plugin::Basic::VERSION = '0.56';
 use strict;
 use warnings;
 
